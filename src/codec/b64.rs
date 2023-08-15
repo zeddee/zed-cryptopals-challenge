@@ -1,9 +1,9 @@
 const UPPERCASEOFFSET: i8 = b'A' as i8; // b'A' is 65 in utf-8, but 0 in Base64. So the offset is b'A'-0.
 const LOWERCASEOFFSET: i8 = b'a' as i8 - 26; // b'a' is 97 in utf-8, but represents 26 in Base64. So the offset is b'a'-26=71.
 const DIGITOFFSET: i8 = b'0' as i8 - 52; // b'0' is 48 in utf-8, and represents 0 in Base64 (haha). So the offset is b'0'-52=-4
-const PADDING: char = '=';
+const PADDING: i8 = '=' as i8;
 
-fn value_to_char(v: u8) -> Option<u8> {
+fn map_value_to_char(v: u8) -> Option<u8> {
     let v = v as i8;
     let ascii_value = match v {
         0..=25 => v + UPPERCASEOFFSET,
@@ -13,12 +13,22 @@ fn value_to_char(v: u8) -> Option<u8> {
         63 => 47, // -
 
         _ => return None,
+            /* We MUST not map any other characters outside the Base64 space.
+            * per specification: https://www.rfc-editor.org/rfc/rfc4648#section-3.3
+            *
+            * > Non-alphabet characters could exist within base-encoded data,
+            * > caused by data corruption or by design.  Non-alphabet characters may
+            * > be exploited as a "covert channel", where non-protocol data can be
+            * > sent for nefarious purposes.  Non-alphabet characters might also be
+            * > sent in order to exploit implementation errors leading to, e.g.,
+            * > buffer overflow attacks.
+            */
     } as u8;
 
     Some(ascii_value)
 }
 
-fn char_to_value(c: u8) -> Option<u8> {
+fn map_char_to_value(c: u8) -> Option<u8> {
     //https://base64.guru/learn/base64-characters
     let c = c as i8;
     let base64_index = match c {
@@ -28,7 +38,7 @@ fn char_to_value(c: u8) -> Option<u8> {
         43 => 62, // '+'
         47 => 63, // '/'
 
-        _ => return None,
+        _ => return None, // also ignores PADDING
     } as u8;
 
     Some(base64_index)
@@ -38,38 +48,36 @@ fn char_to_value(c: u8) -> Option<u8> {
 ascii to base64.
 */
 fn encode_raw_chunk(chunk: &[u8]) -> Vec<u8> {
-    match chunk.len() {
+    assert!(chunk.len() <= 3, "Unexpected chunk size as input. Base64 encoding operates on 3-byte chunks or smaller.");
+
+    let mut res = match chunk.len() {
         1 => vec![
-            // If chunk size is 1 byte, return 2 bytes
-            (&chunk[0] & 0b11111100) >> 2, // shifts bits of the first byte 2 bits to the right. Effectively truncates the last two bits of the byte.
-            (&chunk[0] & 0b00000011) << 4, // selects the last 2 bits, and shifts them 4 bits left.
+            (&chunk[0] & 0b11111100) >> 2,
+            (&chunk[0] & 0b00000011) << 4,
         ],
         2 => vec![
             (&chunk[0] & 0b11111100) >> 2,
-            (&chunk[0] & 0b00000011) << 4 | (&chunk[1] & 0b11110000) >> 4, // Set the second byte by performing an inclusive OR between the first and second bytes
-            (&chunk[1] & 0b00001111) << 2, // For the second byte, shift the last 4 bits 2 bits to the left
+            (&chunk[0] & 0b00000011) << 4 | (&chunk[1] & 0b11110000) >> 4,
+            (&chunk[1] & 0b00001111) << 2,
         ],
         3 => vec![
             (&chunk[0] & 0b11111100) >> 2,
-            (&chunk[0] & 0b00000011) << 4 | (&chunk[1] & 0b11110000) >> 4, // Set the second byte by performing an inclusive OR between the first and second bytes
+            (&chunk[0] & 0b00000011) << 4 | (&chunk[1] & 0b11110000) >> 4,
             (&chunk[1] & 0b00001111) << 2 | (&chunk[2] & 0b11000000) >> 6,
-            &chunk[2] & 0b00111111, // select only the first 6 bits of the 3rd byte
+            &chunk[2] & 0b00111111,
         ],
         _ => unreachable!(),
-    }
-}
+    } // after performing bitwise operations, map each resulting byte from u8 to base64 characters
+    .iter()
+    .filter_map(|c| map_value_to_char(*c))
+    .collect::<Vec<u8>>();
 
-fn encode_chunk(chunk: Vec<u8>) -> Vec<u8> {
-    let mut res_chunk = chunk
-        .iter()
-        .filter_map(|c| value_to_char(*c))
-        .collect::<Vec<u8>>();
+    while res.len() < 4 {
+        res.push(PADDING as u8);
+    } // Inelegant, but we MUST pad only after mapping values to base64 chars
+    // because the padding characters must lie outside the mapped space.
 
-    while res_chunk.len() < 4 {
-        res_chunk.push(PADDING as u8)
-    };
-
-    res_chunk
+    res
 }
 
 pub fn encode_to_string(data: &[u8]) -> String {
@@ -82,8 +90,7 @@ pub fn encode_to_string(data: &[u8]) -> String {
 
 pub fn encode(data: &[u8]) -> Vec<u8> {
     data.chunks(3)
-        .map(|c| encode_raw_chunk(c))
-        .flat_map(|c| encode_chunk(c))
+        .flat_map(|c| encode_raw_chunk(c))
         .collect::<Vec<u8>>()
 }
 

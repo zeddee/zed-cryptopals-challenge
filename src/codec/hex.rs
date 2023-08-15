@@ -40,7 +40,7 @@ pub fn decode(data: &[u8]) -> Vec<u8> {
 
     let mut bytes: Vec<u8> = Vec::new();
     while let (Some(h), Some(l)) = (raw.next(), raw.next()) {
-        bytes.push((h & 0b00001111)  << 4 | (l & 0b00001111))
+        bytes.push((h & 0b00001111) << 4 | (l & 0b00001111))
     }
     bytes
 }
