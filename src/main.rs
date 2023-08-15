@@ -1,4 +1,4 @@
-use cryptochallenge::codec::adapter::EncodingAdapter;
+use cryptochallenge::codec::adapter::Codec;
 use cryptochallenge::codec::{b64, hex};
 
 fn main() {

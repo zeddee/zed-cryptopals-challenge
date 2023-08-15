@@ -1,11 +1,14 @@
-use super::adapter::EncodingAdapter;
+use super::adapter::Codec;
 
 struct Hexadecimal;
 const UPPERCASEOFFSET: u8 = b'A'; // 65 in utf8, but 10 in hex (hex is case insensitive)
 const LOWERCASEOFFSET: u8 = b'a'; // 97 in utf8, but 10 in hex
 const DIGITOFFSET: u8 = b'0'; // 48
 
-impl EncodingAdapter for Hexadecimal {
+impl Codec for Hexadecimal {
+    fn get_chunksize(&self) -> usize {
+        2
+    }
     fn map_value_to_char(&self, v: u8) -> Option<u8> {
         match v {
             0..=9 => Some(v + DIGITOFFSET),
@@ -22,12 +25,11 @@ impl EncodingAdapter for Hexadecimal {
         }
     }
 
-    fn raw_encode(&self, v: &[u8]) -> Vec<u8> {
-        unimplemented!()
-    }
-
-    fn encode_raw_chunk(&self, chunk: &[u8]) -> Vec<u8> {
-        unimplemented!()
+    fn raw_encode(&self, chunk: &[u8]) -> Vec<u8> {
+        chunk
+            .iter()
+            .flat_map(|c| vec![c & 0b00001111, (c & 0b11110000) >> 4])
+            .collect::<Vec<u8>>()
     }
 }
 

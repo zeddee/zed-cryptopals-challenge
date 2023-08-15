@@ -1,4 +1,4 @@
-use super::adapter::EncodingAdapter;
+use super::adapter::Codec;
 
 const UPPERCASEOFFSET: i8 = b'A' as i8; // b'A' is 65 in utf-8, but 0 in Base64. So the offset is b'A'-0.
 const LOWERCASEOFFSET: i8 = b'a' as i8 - 26; // b'a' is 97 in utf-8, but represents 26 in Base64. So the offset is b'a'-26=71.
@@ -7,7 +7,7 @@ const PADDING: i8 = '=' as i8;
 
 pub struct Base64Adapter;
 
-impl EncodingAdapter for Base64Adapter {
+impl Codec for Base64Adapter {
     fn map_value_to_char(&self, v: u8) -> Option<u8> {
         let v = v as i8;
         let ascii_value = match v {
@@ -49,11 +49,15 @@ impl EncodingAdapter for Base64Adapter {
         Some(base64_index)
     }
 
+    fn get_chunksize(&self) -> usize {
+        3
+    }
+
     /* Attempt to perform bitwise operations to convert a 3 byte chunk from
     ascii to base64.
     */
     fn raw_encode(&self, chunk: &[u8]) -> Vec<u8> {
-        match chunk.len() {
+        let mut res = match chunk.len() {
             1 => vec![(&chunk[0] & 0b11111100) >> 2, (&chunk[0] & 0b00000011) << 4],
             2 => vec![
                 (&chunk[0] & 0b11111100) >> 2,
@@ -67,20 +71,10 @@ impl EncodingAdapter for Base64Adapter {
                 &chunk[2] & 0b00111111,
             ],
             _ => unreachable!(),
-        }
-    }
-
-    fn encode_raw_chunk(&self, chunk: &[u8]) -> Vec<u8> {
-        assert!(
-            chunk.len() <= 3,
-            "Unexpected chunk size as input. Base64 encoding operates on 3-byte chunks or smaller."
-        );
-
-        let mut res = self
-            .raw_encode(chunk) // after performing bitwise operations, map each resulting byte from u8 to base64 characters
-            .iter()
-            .filter_map(|c| self.map_value_to_char(*c))
-            .collect::<Vec<u8>>();
+        } // after performing bitwise operations, map each resulting byte from u8 to base64 characters
+        .iter()
+        .filter_map(|c| self.map_value_to_char(*c))
+        .collect::<Vec<u8>>();
 
         while res.len() < 4 {
             res.push(PADDING as u8);
@@ -91,15 +85,13 @@ impl EncodingAdapter for Base64Adapter {
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
-    use crate::codec::adapter::EncodingAdapter;
     use super::Base64Adapter;
+    use crate::codec::adapter::Codec;
 
     fn factory() -> Base64Adapter {
-        Base64Adapter{}
+        Base64Adapter {}
     }
 
     #[test]

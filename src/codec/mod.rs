@@ -2,7 +2,7 @@ pub mod adapter;
 pub mod b64;
 pub mod hex;
 
-use super::codec::adapter::EncodingAdapter;
+use super::codec::adapter::Codec;
 
 pub fn hex_to_b64_string(data: &str) -> String {
     let b64_codec = &b64::Base64Adapter {};
