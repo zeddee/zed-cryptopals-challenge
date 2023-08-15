@@ -28,7 +28,8 @@ impl Codec for Hexadecimal {
     fn raw_encode(&self, chunk: &[u8]) -> Vec<u8> {
         chunk
             .iter()
-            .flat_map(|c| vec![c & 0b00001111, (c & 0b11110000) >> 4])
+            .flat_map(|c| vec![(c & 0b11110000) >> 4, c & 0b00001111])
+            .filter_map(|c| self.map_value_to_char(c))
             .collect::<Vec<u8>>()
     }
 
@@ -52,3 +53,63 @@ impl Codec for Hexadecimal {
     }
 }
 
+
+#[cfg(test)]
+mod tests {
+    use super::Hexadecimal;
+    use crate::codec::adapter::Codec;
+
+    fn factory() -> Hexadecimal {
+        Hexadecimal {}
+    }
+
+    #[test]
+    fn test_encode_single_char() {
+        let input_str = "a";
+        let expected = "61";
+
+        let input_data = input_str.as_bytes();
+
+        assert_eq!(factory().encode_to_string(input_data), expected);
+    }
+
+    #[test]
+    fn test_encode_two_chars() {
+        let input_str = "ab";
+        let expected = "6162";
+
+        let input_data = input_str.as_bytes();
+
+        assert_eq!(factory().encode_to_string(input_data), expected);
+    }
+
+    #[test]
+    fn test_encode_three_chars() {
+        let input_str = "abc";
+        let expected = "616263";
+
+        let input_data = input_str.as_bytes();
+
+        assert_eq!(factory().encode_to_string(input_data), expected);
+    }
+
+    #[test]
+    fn tests_encode_short_string() {
+        let input_str = "Hello, world!";
+        let expected = "48656C6C6F2C20776F726C6421".to_lowercase();
+
+        let input = input_str.as_bytes();
+
+        assert_eq!(factory().encode_to_string(input), expected);
+    }
+
+    #[test]
+    fn test_encode_longer_string() {
+        let input_str = "And here be a bit longer text. Let's see how it goes!";
+        let expected = "416E642068657265206265206120626974206C6F6E67657220746578742E204C657427732073656520686F7720697420676F657321".to_lowercase();
+
+        let input_data = input_str.as_bytes();
+
+        assert_eq!(factory().encode_to_string(input_data), expected);
+    }
+}
