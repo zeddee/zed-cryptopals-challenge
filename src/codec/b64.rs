@@ -49,6 +49,8 @@ impl Codec for Base64Adapter {
         Some(base64_index)
     }
 
+    /* Process 3-byte bundles to encode as Base64.
+     */
     fn get_chunksize(&self) -> usize {
         3
     }
@@ -82,6 +84,10 @@ impl Codec for Base64Adapter {
           // because the padding characters must lie outside the mapped space.
 
         res
+    }
+
+    fn raw_decode(&self, data: &[u8]) -> Vec<u8> {
+        unimplemented!()
     }
 }
 

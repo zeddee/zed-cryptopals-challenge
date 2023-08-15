@@ -2,8 +2,9 @@ use cryptochallenge::codec::adapter::Codec;
 use cryptochallenge::codec::{b64, hex};
 
 fn main() {
-    let hex_bytes = hex::decode_string(
+    let hex_bytes = &hex::Hexadecimal{}.decode(
         "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"
+            .as_bytes()
     );
     println!(
         "{}",

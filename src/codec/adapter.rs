@@ -35,4 +35,18 @@ pub trait Codec {
             .map(|v| (*v as char).to_string())
             .collect::<String>()
     }
+
+    fn raw_decode(&self, v: &[u8]) -> Vec<u8>;
+
+    fn decode(&self, data: &[u8]) -> Vec<u8> {
+        data.chunks(4)
+            .flat_map(|c| self.raw_decode(c))
+            .collect::<Vec<u8>>()
+    }
+    fn decode_to_string(&self, data: &[u8]) -> String {
+        self.decode(data)
+            .iter()
+            .map(|v| (*v as char).to_string())
+            .collect::<String>()
+    }
 }
