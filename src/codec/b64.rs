@@ -86,8 +86,39 @@ impl Codec for Base64Adapter {
         res
     }
 
-    fn raw_decode(&self, data: &[u8]) -> Vec<u8> {
-        unimplemented!()
+    fn raw_decode(&self, chunk: &[u8]) -> Vec<u8> {
+        // strip PADDING
+        let stripped = chunk
+            .iter()
+            .filter(|&c| *c != (PADDING as u8))
+            .filter_map(|c| self.map_char_to_value(*c))
+            .collect::<Vec<u8>>();
+
+        println!(
+            "{:?}",
+            stripped.iter().map(|x| *x as char).collect::<Vec<char>>()
+        );
+
+        match stripped.len() {
+            2 => vec![
+                (&chunk[0] & 0b00111111) << 2 | (&chunk[1] & 0b11110000) >> 4,
+                (&chunk[1] & 0b00001111) << 4,
+            ],
+            3 => vec![
+                (&chunk[0] & 0b00111111) << 2 | (&chunk[1] & 0b00110000) >> 4,
+                (&chunk[1] & 0b00001111) << 4 | (&chunk[2] & 0b00111100) >> 2,
+                (&chunk[2] & 0b00000011) << 6,
+            ],
+            4 => vec![
+                (&chunk[0] & 0b00111111) << 2 | (&chunk[1] & 0b00110000) >> 4,
+                (&chunk[1] & 0b00001111) << 4 | (&chunk[2] & 0b00111100) >> 2,
+                (&chunk[2] & 0b00000011) << 6 | (&chunk[3] & 0b00111111),
+            ],
+            _ => unreachable!(),
+        }
+        .into_iter()
+        .filter(|c| *c > 0)
+        .collect()
     }
 }
 
