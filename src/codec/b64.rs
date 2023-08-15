@@ -101,7 +101,7 @@ mod tests {
     }
 
     #[test]
-    fn test_single_char() {
+    fn test_decode_single_char() {
         let input_str = "a";
         let expected = "YQ==";
 
@@ -111,7 +111,7 @@ mod tests {
     }
 
     #[test]
-    fn test_two_chars() {
+    fn test_decode_two_chars() {
         let input_str = "ab";
         let expected = "YWI=";
 
@@ -121,7 +121,7 @@ mod tests {
     }
 
     #[test]
-    fn test_three_chars() {
+    fn test_decode_three_chars() {
         let input_str = "abc";
         let expected = "YWJj";
 
@@ -131,7 +131,7 @@ mod tests {
     }
 
     #[test]
-    fn tests_short_string() {
+    fn test_decode_short_string() {
         let input_str = "Hello, world!";
         let expected = "SGVsbG8sIHdvcmxkIQ==";
 
@@ -141,7 +141,7 @@ mod tests {
     }
 
     #[test]
-    fn test_longer_string() {
+    fn test_decode_longer_string() {
         let input_str = "And here be a bit longer text. Let's see how it goes!";
         let expected = "QW5kIGhlcmUgYmUgYSBiaXQgbG9uZ2VyIHRleHQuIExldCdzIHNlZSBob3cgaXQgZ29lcyE=";
 

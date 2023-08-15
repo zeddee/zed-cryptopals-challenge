@@ -94,7 +94,7 @@ mod tests {
     }
 
     #[test]
-    fn tests_encode_short_string() {
+    fn test_encode_short_string() {
         let input_str = "Hello, world!";
         let expected = "48656C6C6F2C20776F726C6421".to_lowercase();
 
