@@ -101,7 +101,7 @@ mod tests {
     }
 
     #[test]
-    fn test_decode_single_char() {
+    fn test_encode_single_char() {
         let input_str = "a";
         let expected = "YQ==";
 
@@ -111,7 +111,7 @@ mod tests {
     }
 
     #[test]
-    fn test_decode_two_chars() {
+    fn test_encode_two_chars() {
         let input_str = "ab";
         let expected = "YWI=";
 
@@ -121,7 +121,7 @@ mod tests {
     }
 
     #[test]
-    fn test_decode_three_chars() {
+    fn test_encode_three_chars() {
         let input_str = "abc";
         let expected = "YWJj";
 
@@ -131,7 +131,7 @@ mod tests {
     }
 
     #[test]
-    fn test_decode_short_string() {
+    fn test_encode_short_string() {
         let input_str = "Hello, world!";
         let expected = "SGVsbG8sIHdvcmxkIQ==";
 
@@ -141,12 +141,62 @@ mod tests {
     }
 
     #[test]
-    fn test_decode_longer_string() {
+    fn test_encode_longer_string() {
         let input_str = "And here be a bit longer text. Let's see how it goes!";
         let expected = "QW5kIGhlcmUgYmUgYSBiaXQgbG9uZ2VyIHRleHQuIExldCdzIHNlZSBob3cgaXQgZ29lcyE=";
 
         let input_data = input_str.as_bytes();
 
         assert_eq!(factory().encode_to_string(input_data), expected);
+    }
+
+    #[test]
+    fn test_decode_single_char() {
+        let input_str = "YQ==";
+        let expected = "a";
+
+        let input_data = input_str.as_bytes();
+
+        assert_eq!(factory().decode_to_string(input_data), expected);
+    }
+
+    #[test]
+    fn test_decode_two_chars() {
+        let input_str = "YWI=";
+        let expected = "ab";
+
+        let input_data = input_str.as_bytes();
+
+        assert_eq!(factory().decode_to_string(input_data), expected);
+    }
+
+    #[test]
+    fn test_decode_three_chars() {
+        let input_str = "YWJj";
+        let expected = "abc";
+
+        let input_data = input_str.as_bytes();
+
+        assert_eq!(factory().decode_to_string(input_data), expected);
+    }
+
+    #[test]
+    fn test_decode_short_string() {
+        let input_str = "SGVsbG8sIHdvcmxkIQ==";
+        let expected = "Hello, world!";
+
+        let input = input_str.as_bytes();
+
+        assert_eq!(factory().decode_to_string(input), expected);
+    }
+
+    #[test]
+    fn test_decode_longer_string() {
+        let input_str = "QW5kIGhlcmUgYmUgYSBiaXQgbG9uZ2VyIHRleHQuIExldCdzIHNlZSBob3cgaXQgZ29lcyE=";
+        let expected = "And here be a bit longer text. Let's see how it goes!";
+
+        let input_data = input_str.as_bytes();
+
+        assert_eq!(factory().decode_to_string(input_data), expected);
     }
 }
