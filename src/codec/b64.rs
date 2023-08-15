@@ -41,18 +41,18 @@ fn encode_raw_chunk(chunk: &[u8]) -> Vec<u8> {
     match chunk.len() {
         1 => vec![
             // If chunk size is 1 byte, return 2 bytes
-            &chunk[0] >> 2, // shifts bits of the first byte 2 bits to the right. Effectively truncates the last two bits of the byte.
+            (&chunk[0] & 0b11111100) >> 2, // shifts bits of the first byte 2 bits to the right. Effectively truncates the last two bits of the byte.
             (&chunk[0] & 0b00000011) << 4, // selects the last 2 bits, and shifts them 4 bits left.
         ],
         2 => vec![
-            &chunk[0] >> 2,
-            (&chunk[0] & 0b00000011) << 4 | &chunk[1] >> 4, // Set the second byte by performing an inclusive OR between the first and second bytes
+            (&chunk[0] & 0b11111100) >> 2,
+            (&chunk[0] & 0b00000011) << 4 | (&chunk[1] & 0b11110000) >> 4, // Set the second byte by performing an inclusive OR between the first and second bytes
             (&chunk[1] & 0b00001111) << 2, // For the second byte, shift the last 4 bits 2 bits to the left
         ],
         3 => vec![
-            &chunk[0] >> 2,
-            (&chunk[0] & 0b00000011) << 4 | &chunk[1] >> 4, // Set the second byte by performing an inclusive OR between the first and second bytes
-            (&chunk[1] & 0b00001111) << 2 | &chunk[2] >> 6,
+            (&chunk[0] & 0b11111100) >> 2,
+            (&chunk[0] & 0b00000011) << 4 | (&chunk[1] & 0b11110000) >> 4, // Set the second byte by performing an inclusive OR between the first and second bytes
+            (&chunk[1] & 0b00001111) << 2 | (&chunk[2] & 0b11000000) >> 6,
             &chunk[2] & 0b00111111, // select only the first 6 bits of the 3rd byte
         ],
         _ => unreachable!(),
@@ -60,15 +60,16 @@ fn encode_raw_chunk(chunk: &[u8]) -> Vec<u8> {
 }
 
 fn encode_chunk(chunk: Vec<u8>) -> Vec<u8> {
-    let mut out = vec![PADDING; 4];
+    let mut res_chunk = chunk
+        .iter()
+        .filter_map(|c| value_to_char(*c))
+        .collect::<Vec<u8>>();
 
-    for i in 0..chunk.len() {
-        if let Some(c) = value_to_char(chunk[i]) {
-            //println!("Replacing {:?} with {:?}", out[i], c as char);
-            out[i] = c as char;
-        }
-    }
-    out.iter().map(|c| *c as u8).collect::<Vec<u8>>()
+    while res_chunk.len() < 4 {
+        res_chunk.push(PADDING as u8)
+    };
+
+    res_chunk
 }
 
 pub fn encode_to_string(data: &[u8]) -> String {
