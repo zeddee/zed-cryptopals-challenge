@@ -1,3 +1,4 @@
+use cryptochallenge::codec::adapter::EncodingAdapter;
 use cryptochallenge::codec::{b64, hex};
 
 fn main() {
@@ -12,6 +13,6 @@ fn main() {
             .collect::<String>()
     );
 
-    let b64_string = b64::encode_to_string(hex_bytes.as_slice());
+    let b64_string = b64::Base64Adapter{}.encode_to_string(hex_bytes.as_slice());
     println!("{:?}", b64_string,);
 }
