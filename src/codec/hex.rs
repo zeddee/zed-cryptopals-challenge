@@ -42,10 +42,10 @@ impl Codec for Hexadecimal {
     and concatenate each of the actual important 4 bits into an 8-bit space.
     */
     fn raw_decode(&self, data: &[u8]) -> Vec<u8> {
-        let mut raw = data.iter()
-            .filter_map(|c| self.map_char_to_value(*c));
-
+        let mut raw = data
+            .iter().filter_map(|c| self.map_char_to_value(*c));
         let mut res: Vec<u8> = Vec::new();
+
         while let (Some(h), Some(l)) = (raw.next(), raw.next()) {
             res.push((h & 0b00001111) << 4 | (l & 0b00001111))
         }
@@ -111,5 +111,55 @@ mod tests {
         let input_data = input_str.as_bytes();
 
         assert_eq!(factory().encode_to_string(input_data), expected);
+    }
+
+    #[test]
+    fn test_decode_single_char() {
+        let input_str = "61";
+        let expected = "a";
+
+        let input_data = input_str.as_bytes();
+
+        assert_eq!(factory().decode_to_string(input_data), expected);
+    }
+
+    #[test]
+    fn test_decode_two_chars() {
+        let input_str = "6162";
+        let expected = "ab";
+
+        let input_data = input_str.as_bytes();
+
+        assert_eq!(factory().decode_to_string(input_data), expected);
+    }
+
+    #[test]
+    fn test_decode_three_chars() {
+        let input_str = "616263";
+        let expected = "abc";
+
+        let input_data = input_str.as_bytes();
+
+        assert_eq!(factory().decode_to_string(input_data), expected);
+    }
+
+    #[test]
+    fn test_decode_short_string() {
+        let input_str = "48656C6C6F2C20776F726C6421";
+        let expected = "Hello, world!";
+
+        let input = input_str.as_bytes();
+
+        assert_eq!(factory().decode_to_string(input), expected);
+    }
+
+    #[test]
+    fn test_decode_longer_string() {
+        let input_str = "416E642068657265206265206120626974206C6F6E67657220746578742E204C657427732073656520686F7720697420676F657321";
+        let expected = "And here be a bit longer text. Let's see how it goes!";
+
+        let input_data = input_str.as_bytes();
+
+        assert_eq!(factory().decode_to_string(input_data), expected);
     }
 }
