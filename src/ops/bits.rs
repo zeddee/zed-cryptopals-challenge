@@ -35,8 +35,6 @@ pub fn xor_decrypt_hex(crypt_text: &[u8], cipher: &[u8]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::codec::adapter::Codec;
-    use crate::codec::hex::Hexadecimal;
 
     #[test]
     fn test_xor_two_hexes() {
