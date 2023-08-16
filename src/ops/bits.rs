@@ -48,6 +48,9 @@ mod tests {
 
         let res = xor_decrypt_hex(case.0, case.1);
 
-        assert_eq!(Hexadecimal {}.decode_to_string(res.as_slice()), "Cooking MC's like a pound of bacon");
+        assert_eq!(
+            Hexadecimal {}.decode_to_string(res.as_slice()),
+            "Cooking MC's like a pound of bacon"
+        );
     }
 }
