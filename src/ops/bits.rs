@@ -16,20 +16,10 @@ pub fn xor_two_hexes(hex1: &[u8], hex2: &[u8]) -> Vec<u8> {
 }
 
 pub fn xor_decrypt_hex(crypt_text: &[u8], cipher: &[u8]) -> Vec<u8> {
-    let res = crypt_text
+    crypt_text
         .chunks(cipher.len())
-        .map(|x| {
-            println!("{:?}", x);
-            println!("{:?}", &cipher);
-            let res = xor_two_hexes(x, &cipher);
-            println!("mapped: {:?}", res);
-            res
-        })
-        .flatten()
-        .collect();
-
-    println!("{:?}", res);
-    res
+        .flat_map(|x| xor_two_hexes(x, &cipher))
+        .collect()
 }
 
 #[cfg(test)]
