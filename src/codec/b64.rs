@@ -111,8 +111,7 @@ impl Codec for Base64Adapter {
 
     // Do we have to rewrite the decode method?
     fn decode(&self, data: &[u8]) -> Vec<u8> {
-        data
-            .chunks(4)
+        data.chunks(4)
             .map(|c| {
                 // retain chunk size by stripping padding and remapping
                 // within a map

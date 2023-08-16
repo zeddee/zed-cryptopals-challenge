@@ -42,8 +42,7 @@ impl Codec for Hexadecimal {
     and concatenate each of the actual important 4 bits into an 8-bit space.
     */
     fn raw_decode(&self, data: &[u8]) -> Vec<u8> {
-        let mut raw = data
-            .iter().filter_map(|c| self.map_char_to_value(*c));
+        let mut raw = data.iter().filter_map(|c| self.map_char_to_value(*c));
         let mut res: Vec<u8> = Vec::new();
 
         while let (Some(h), Some(l)) = (raw.next(), raw.next()) {
@@ -52,7 +51,6 @@ impl Codec for Hexadecimal {
         res
     }
 }
-
 
 #[cfg(test)]
 mod tests {

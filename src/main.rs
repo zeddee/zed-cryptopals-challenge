@@ -14,6 +14,6 @@ fn main() {
             .collect::<String>()
     );
 
-    let b64_string = b64::Base64Adapter{}.encode_to_string(hex_bytes.as_slice());
+    let b64_string = b64::Base64Adapter {}.encode_to_string(hex_bytes.as_slice());
     println!("{:?}", b64_string,);
 }
