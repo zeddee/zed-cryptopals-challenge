@@ -87,19 +87,7 @@ impl Codec for Base64Adapter {
     }
 
     fn raw_decode(&self, chunk: &[u8]) -> Vec<u8> {
-        // strip PADDING
-        let stripped = chunk
-            .iter()
-            .filter(|&c| *c != (PADDING as u8))
-            .filter_map(|c| self.map_char_to_value(*c))
-            .collect::<Vec<u8>>();
-
-        println!(
-            "{:?}",
-            stripped.iter().map(|x| *x as char).collect::<Vec<char>>()
-        );
-
-        match stripped.len() {
+        match chunk.len() {
             2 => vec![
                 (&chunk[0] & 0b00111111) << 2 | (&chunk[1] & 0b11110000) >> 4,
                 (&chunk[1] & 0b00001111) << 4,
@@ -117,8 +105,25 @@ impl Codec for Base64Adapter {
             _ => unreachable!(),
         }
         .into_iter()
-        .filter(|c| *c > 0)
+        .filter(|c| *c > 0) // strip empty chunks post-decocde (EOL chars)
         .collect()
+    }
+
+    // Do we have to rewrite the decode method?
+    fn decode(&self, data: &[u8]) -> Vec<u8> {
+        data
+            .chunks(4)
+            .map(|c| {
+                // retain chunk size by stripping padding and remapping
+                // within a map
+                c.iter()
+                    .filter(|c| **c != PADDING as u8)
+                    .filter_map(|c| self.map_char_to_value(*c))
+                    .collect::<Vec<u8>>()
+            })
+            .map(|c| self.raw_decode(&c))
+            .flatten()
+            .collect::<Vec<u8>>()
     }
 }
 
