@@ -1,13 +1,7 @@
 use crate::codec::adapter::Codec;
 use crate::codec::hex::Hexadecimal;
+use crate::crack::DecryptResult;
 use crate::ops::bits::*;
-
-#[derive(Debug)]
-struct DecryptResult {
-    // cipher: Vec<u8>,
-    score: usize,
-    decrypted_result: Vec<u8>,
-}
 
 // Read a series of characters and assign a score for each.
 // The higher the score, the more ASCII characters are in the input data,
@@ -19,8 +13,8 @@ pub fn decrypt_score(score_me: Vec<u8>) -> usize {
             let res_c = match c {
                 65..=90 => 20,  // ASCII Uppercase alphabet
                 97..=122 => 20, // ASCII Lowercase alphabet
-                48..=57 => 10,   // ASCII Digit
-                32 => 20,        // Space
+                48..=57 => 10,  // ASCII Digit
+                32 => 20,       // Space
                 33..=47 => 1,   // ASCII punctuation
                 58..=64 => 1,   // More ASCII punctuation
                 91..=96 => 1,   // More ASCII punctuation
