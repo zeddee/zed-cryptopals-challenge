@@ -30,7 +30,7 @@ mod tests {
 
   #[test]
   fn test_find_encrypted_string(){
-    let res = find_encrypted_string("_data/challenge4.txt");
+    let res = find_encrypted_string("_data/set1/challenge4.txt");
     let expected = "Now that the party is jumping\n";
     assert_eq!(res, expected);
   }
