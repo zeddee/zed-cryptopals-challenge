@@ -12,7 +12,7 @@ where
 
 pub fn read_file<P>(filename: P) -> Vec<String>
 where
-    P: AsRef<Path>
+    P: AsRef<Path>,
 {
     /*
     let mut res: Vec<String> = Vec::new();
@@ -33,6 +33,6 @@ where
             } else {
                 "".to_string()
             }
-        }
-    ).collect()
+        })
+        .collect()
 }

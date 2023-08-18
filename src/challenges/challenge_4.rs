@@ -13,8 +13,7 @@ pub fn find_encrypted_string(filename: &str) -> String {
     for crypt_line in crypt_list {
         let line_decrypt = xor_decrypt::brute(&crypt_line.as_str());
         let score = xor_decrypt::decrypt_score(line_decrypt.clone());
-        let line_decrypt_string =
-            line_decrypt.iter().map(|c| *c as char).collect::<String>();
+        let line_decrypt_string = line_decrypt.iter().map(|c| *c as char).collect::<String>();
         println!("decrypted: {}", line_decrypt_string);
         if score > res.1 {
             res = (line_decrypt_string, score);
