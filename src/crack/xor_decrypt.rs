@@ -12,15 +12,15 @@ struct DecryptResult {
 // Read a series of characters and assign a score for each.
 // The higher the score, the more ASCII characters are in the input data,
 // and the more likely it is human-readable text.
-fn decrypt_score(score_me: Vec<u8>) -> usize {
+pub fn decrypt_score(score_me: Vec<u8>) -> usize {
     score_me
         .iter()
         .map(|&c| {
             let res_c = match c {
-                65..=90 => 10,  // ASCII Uppercase alphabet
-                97..=122 => 10, // ASCII Lowercase alphabet
-                48..=57 => 5,   // ASCII Digit
-                32 => 5,        // Space
+                65..=90 => 20,  // ASCII Uppercase alphabet
+                97..=122 => 20, // ASCII Lowercase alphabet
+                48..=57 => 10,   // ASCII Digit
+                32 => 20,        // Space
                 33..=47 => 1,   // ASCII punctuation
                 58..=64 => 1,   // More ASCII punctuation
                 91..=96 => 1,   // More ASCII punctuation
