@@ -1,11 +1,9 @@
-
-
 /// # Codec adapter
 /// Implement Codec to provide an adapter that
 /// implements the ability to encode and decode a given encoding format.
 /// This module provides implementations for [Base64][crate::codec::b64::Base64Adapter]
 /// and [Hexadecimal][crate::codec::hex::Hexadecimal] encodings.
-/// 
+///
 /// Codecs should allow you to:
 /// - Transform a byte slice of UTF-8 code points to code points for the target encoding format.
 /// - Transform a byte slice of code points from the target encoding format to UTF-8 code points.
@@ -34,15 +32,17 @@ pub trait Codec {
     ///
     /// Only called internally by [Codec::encode]
     /// to provide chunks of this size for [Codec::raw_encode] to operate over.
-    /// 
+    ///
     /// By default, returns `4` for the 4 byte chunks we expect to contain UTF8 characters.
     /// Change this when working with encodings that expect a different chunk size.
     /// For example:
     /// - [crate::codec::b64::Base64Adapter] changes this to 3 because Base64 encoding expects 3 byte chunks
     /// - [crate::codec::hex::Hexadecimal] changes this to 2 because Hexadecimal encoding expects 2 byte chunks
-    /// 
+    ///
     /// Used in lieu of being able to declare `const` values in a trait.
-    fn get_chunksize(&self) -> usize { 4 }
+    fn get_chunksize(&self) -> usize {
+        4
+    }
 
     /// Encode a byte slice using [Codec::raw_encode].
     fn encode(&self, data: &[u8]) -> Vec<u8> {
