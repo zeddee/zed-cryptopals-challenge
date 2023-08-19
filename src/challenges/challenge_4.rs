@@ -1,4 +1,5 @@
-use crate::{crack::xor_decrypt, codec::hex::Hexadecimal};
+use crate::codec::hex::Hexadecimal;
+use crate::crack::xor;
 
 pub fn find_encrypted_string(filename: &str) -> String {
     /* One-off function to:
@@ -8,11 +9,12 @@ pub fn find_encrypted_string(filename: &str) -> String {
     1. Return the decrypted string that scores the highest.
      */
     let mut res: (String, usize) = (String::from(""), 0);
-    let crypt_list = crate::utils::read_file(filename);
+    let codec = &Hexadecimal {};
+    let crypt_list = crate::utils::fs::read_file(filename);
 
     for crypt_line in crypt_list {
-        let line_decrypt = xor_decrypt::brute(&Hexadecimal{}, &crypt_line.as_str());
-        let score = xor_decrypt::decrypt_score(line_decrypt.clone());
+        let line_decrypt = xor::brute(codec, &crypt_line.as_str());
+        let score = xor::ascii_score(line_decrypt.clone());
         let line_decrypt_string = line_decrypt.iter().map(|c| *c as char).collect::<String>();
         println!("decrypted: {}", line_decrypt_string);
         if score > res.1 {

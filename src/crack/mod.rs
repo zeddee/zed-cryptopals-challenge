@@ -1,4 +1,4 @@
-pub mod xor_decrypt;
+pub mod xor;
 pub mod xor_repeating_key;
 
 #[derive(Debug)]

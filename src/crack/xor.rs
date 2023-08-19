@@ -1,12 +1,11 @@
 use crate::codec::adapter::Codec;
 use crate::codec::hex::Hexadecimal;
 use crate::crack::DecryptResult;
-use crate::ops::bits::*;
 
 // Read a series of characters and assign a score for each.
 // The higher the score, the more ASCII characters are in the input data,
 // and the more likely it is human-readable text.
-pub fn decrypt_score(score_me: Vec<u8>) -> usize {
+pub fn ascii_score(score_me: Vec<u8>) -> usize {
     score_me
         .iter()
         .map(|&c| {
@@ -40,16 +39,16 @@ pub fn brute<T: Codec>(codec: &T, crypt_text: &str) -> Vec<u8> {
         let cipher = Hexadecimal {}.encode(&[brute_cipher]);
 
         let decrypt_res = Hexadecimal {}
-            .decode(xor_decrypt_hex(codec, crypt_text.as_bytes(), cipher.as_slice()).as_slice());
+            .decode(xor_decrypt(codec, crypt_text.as_bytes(), cipher.as_slice()).as_slice());
 
-        let current_decrypt_score = DecryptResult {
-            score: decrypt_score(decrypt_res.clone()),
+        let current_ascii_score = DecryptResult {
+            score: ascii_score(decrypt_res.clone()),
             //cipher: cipher,
             decrypted_result: decrypt_res,
         };
 
-        if leader.score < current_decrypt_score.score {
-            leader = current_decrypt_score
+        if leader.score < current_ascii_score.score {
+            leader = current_ascii_score
         }
 
         brute_cipher += 1;
@@ -58,9 +57,36 @@ pub fn brute<T: Codec>(codec: &T, crypt_text: &str) -> Vec<u8> {
     leader.decrypted_result
 }
 
+/* Limitation -- we zip the two byte slices,
+which truncates both slices to the length of the shorter slice in the resulting (&[u8], &[u8]) tuple.
+ */
+pub fn xor_two<T: Codec>(codec: &T, hex1: &[u8], hex2: &[u8]) -> Vec<u8> {
+    let d1 = codec.decode(hex1);
+    let d2 = codec.decode(hex2);
+
+    let res = d1
+        .iter()
+        .zip(d2.iter())
+        .map(|(l, h)| l ^ h)
+        .collect::<Vec<u8>>();
+
+    codec.encode(res.as_slice())
+}
+
+pub fn xor_decrypt<T: Codec>(codec: &T, crypt_text: &[u8], cipher: &[u8]) -> Vec<u8> {
+    crypt_text
+        .chunks(cipher.len())
+        .flat_map(|x| xor_two(codec, x, &cipher))
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn factory() -> Hexadecimal {
+        Hexadecimal {}
+    }
 
     #[test]
     fn test_xor_decrypt_brute() {
@@ -71,7 +97,7 @@ mod tests {
         println!("Expected cipher: {:?}", expected_cipher);
 
         let res = brute(
-            &Hexadecimal{},
+            &factory(),
             input
                 .iter()
                 .map(|c| *c as char)
@@ -81,6 +107,34 @@ mod tests {
 
         assert_eq!(
             res.iter().map(|c| *c as char).collect::<String>(),
+            "Cooking MC's like a pound of bacon"
+        );
+    }
+
+    #[test]
+    fn test_xor_two_hexes() {
+        let case = (
+            "1c0111001f010100061a024b53535009181c".as_bytes(),
+            "686974207468652062756c6c277320657965".as_bytes(),
+            "746865206b696420646f6e277420706c6179".as_bytes(),
+        );
+
+        let res = xor_two(&factory(), case.0, case.1);
+
+        assert_eq!(res, case.2);
+    }
+
+    #[test]
+    fn test_xor_decrypt() {
+        let case = (
+            "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736".as_bytes(),
+            "58".as_bytes(),
+        );
+
+        let res = xor_decrypt(&factory(), case.0, case.1);
+
+        assert_eq!(
+            Hexadecimal {}.decode_to_string(res.as_slice()),
             "Cooking MC's like a pound of bacon"
         );
     }
