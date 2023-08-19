@@ -1,8 +1,7 @@
 use crate::codec::adapter::Codec;
 use crate::codec::hex::Hexadecimal;
 
-pub fn xor_two_hexes(hex1: &[u8], hex2: &[u8]) -> Vec<u8> {
-    let codec = &Hexadecimal {};
+pub fn xor_two_hexes<T: Codec>(codec: &T, hex1: &[u8], hex2: &[u8]) -> Vec<u8> {
     let d1 = codec.decode(hex1);
     let d2 = codec.decode(hex2);
 
@@ -15,16 +14,20 @@ pub fn xor_two_hexes(hex1: &[u8], hex2: &[u8]) -> Vec<u8> {
     codec.encode(res.as_slice())
 }
 
-pub fn xor_decrypt_hex(crypt_text: &[u8], cipher: &[u8]) -> Vec<u8> {
+pub fn xor_decrypt_hex<T: Codec>(codec: &T, crypt_text: &[u8], cipher: &[u8]) -> Vec<u8> {
     crypt_text
         .chunks(cipher.len())
-        .flat_map(|x| xor_two_hexes(x, &cipher))
+        .flat_map(|x| xor_two_hexes(codec, x, &cipher))
         .collect()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn factory() -> Hexadecimal {
+        Hexadecimal{}
+    }
 
     #[test]
     fn test_xor_two_hexes() {
@@ -34,7 +37,7 @@ mod tests {
             "746865206b696420646f6e277420706c6179".as_bytes(),
         );
 
-        let res = xor_two_hexes(case.0, case.1);
+        let res = xor_two_hexes(&factory(), case.0, case.1);
 
         assert_eq!(res, case.2);
     }
@@ -46,7 +49,7 @@ mod tests {
             "58".as_bytes(),
         );
 
-        let res = xor_decrypt_hex(case.0, case.1);
+        let res = xor_decrypt_hex(&factory(), case.0, case.1);
 
         assert_eq!(
             Hexadecimal {}.decode_to_string(res.as_slice()),

@@ -26,7 +26,7 @@ pub fn decrypt_score(score_me: Vec<u8>) -> usize {
         .fold(0, |x, acc| x + acc as usize)
 }
 
-pub fn brute(crypt_text: &str) -> Vec<u8> {
+pub fn brute<T: Codec>(codec: &T, crypt_text: &str) -> Vec<u8> {
     let mut leader = DecryptResult {
         // cipher: vec![0],
         score: 0,
@@ -40,7 +40,7 @@ pub fn brute(crypt_text: &str) -> Vec<u8> {
         let cipher = Hexadecimal {}.encode(&[brute_cipher]);
 
         let decrypt_res = Hexadecimal {}
-            .decode(xor_decrypt_hex(crypt_text.as_bytes(), cipher.as_slice()).as_slice());
+            .decode(xor_decrypt_hex(codec, crypt_text.as_bytes(), cipher.as_slice()).as_slice());
 
         let current_decrypt_score = DecryptResult {
             score: decrypt_score(decrypt_res.clone()),
@@ -71,6 +71,7 @@ mod tests {
         println!("Expected cipher: {:?}", expected_cipher);
 
         let res = brute(
+            &Hexadecimal{},
             input
                 .iter()
                 .map(|c| *c as char)
