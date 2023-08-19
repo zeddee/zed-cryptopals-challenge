@@ -49,15 +49,14 @@ impl Codec for Base64Adapter {
         Some(base64_index)
     }
 
-    /* Process 3-byte bundles to encode as Base64.
-     */
+    /// Set expected length of byte chunks to 3.
+    /// See [crate::codec::adapter::Codec::get_chunksize].
     fn get_chunksize(&self) -> usize {
         3
     }
 
-    /* Attempt to perform bitwise operations to convert a 3 byte chunk from
-    ascii to base64.
-    */
+    /// Bitwise operations to expand data in 3-byte chunks operating
+    /// in an 8-bit space to 4-byte chunks operating in a 6-bit space.
     fn raw_encode(&self, chunk: &[u8]) -> Vec<u8> {
         let mut res = match chunk.len() {
             1 => vec![(&chunk[0] & 0b11111100) >> 2, (&chunk[0] & 0b00000011) << 4],
@@ -109,7 +108,9 @@ impl Codec for Base64Adapter {
         .collect()
     }
 
-    // Do we have to rewrite the decode method?
+    /// Explicitly rewrite the [crate::codec::adapter::Codec::decode] method,
+    /// because Base64 requires a different sequence of operations over
+    /// the processed byte chunks.
     fn decode(&self, data: &[u8]) -> Vec<u8> {
         data.chunks(4)
             .map(|c| {

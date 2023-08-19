@@ -1,13 +1,14 @@
+//! Set 1/Challenge 4 <https://cryptopals.com/sets/1/challenges/4>
+
 use crate::codec::hex::Hexadecimal;
 use crate::crack::xor;
 
+/// One-off function to:
+/// 1. Read a file containing one hex per line.
+/// 1. Decrypt each line with xor_decrypt::brute.
+/// 1. Score the result with xor_decrypt::decrypt_score.
+/// 1. Return the decrypted string that scores the highest.
 pub fn find_encrypted_string(filename: &str) -> String {
-    /* One-off function to:
-    1. Read a file containing one hex per line.
-    1. Decrypt each line with xor_decrypt::brute.
-    1. Score the result with xor_decrypt::decrypt_score.
-    1. Return the decrypted string that scores the highest.
-     */
     let mut res: (String, usize) = (String::from(""), 0);
     let codec = &Hexadecimal {};
     let crypt_list = crate::utils::fs::read_file(filename);
