@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["ascii_score","brute","xor_decrypt","xor_encrypt"]};
