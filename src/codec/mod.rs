@@ -5,7 +5,7 @@
 //! methods that operate on byte slices to convert
 //! content from one encoding format to another.
 //!
-//! A [crate::codec::Codec] implementation describes how bits from an incoming byte
+//! A [crate::codec::adapter::Codec] implementation describes how bits from an incoming byte
 //! slice should be manipulated to produce an encoded or decoded result.
 
 pub mod adapter;

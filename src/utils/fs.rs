@@ -1,8 +1,10 @@
+//! Convenience wrappers for filesystem tasks.
+
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
-pub fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
+fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 where
     P: AsRef<Path>,
 {
@@ -10,6 +12,7 @@ where
     Ok(io::BufReader::new(file).lines())
 }
 
+/// Read the contents of a file
 pub fn read_file<P>(filename: P) -> Vec<String>
 where
     P: AsRef<Path>,

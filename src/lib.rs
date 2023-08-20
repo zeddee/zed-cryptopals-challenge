@@ -8,7 +8,14 @@
 //! - That's because the Cryptopals challenges build upon each other to form a comprehensive cryptographic toolkit.
 //! - Except: _Some_ challenges that result in one-off code _are_ addressed direcctly in [crate::challenges].
 
-pub mod challenges;
-pub mod codec;
+/// Implementation of various encryption and decryption tasks
 pub mod crack;
+
+/// Encoding formats implemented to provide encode and decode utilities.
+pub mod codec;
+
+/// Shared utilities for this crate.
 pub mod utils;
+
+/// One-off implementations for specific Cryptopals challenges.
+pub mod challenges;
