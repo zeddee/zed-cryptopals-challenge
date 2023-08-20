@@ -10,7 +10,7 @@
 //!
 //! ## References
 //!
-//! - https://dev.to/tiemen/implementing-base64-from-scratch-in-rust-kb1
+//! - <https://dev.to/tiemen/implementing-base64-from-scratch-in-rust-kb1>
 //! - [RFC 4648](https://www.rfc-editor.org/rfc/rfc4648#section-3.3)
 
 /// Implementation of various encryption and decryption tasks
