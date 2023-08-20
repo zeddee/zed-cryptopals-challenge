@@ -22,6 +22,12 @@ mod tests {
         let expected =
             "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
 
-        assert_eq!(encrypt(&Hexadecimal{}, input, cipher).iter().map(|c| *c as char).collect::<String>(), expected);
+        assert_eq!(
+            encrypt(&Hexadecimal {}, input, cipher)
+                .iter()
+                .map(|c| *c as char)
+                .collect::<String>(),
+            expected
+        );
     }
 }
