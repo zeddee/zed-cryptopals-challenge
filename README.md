@@ -1,4 +1,6 @@
 # Work on cryptopals crypto challenges
 
-https://cryptopals.com/
+Zed is working through https://cryptopals.com/ challenges.
+
+Documentation: https://zeddee.github.io/zed-cryptopals-challenge/zed_cryptopals_challenge/
 
