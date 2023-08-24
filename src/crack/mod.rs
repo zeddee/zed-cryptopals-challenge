@@ -12,7 +12,7 @@ pub mod xor_repeating_key;
 ///
 /// Intended to be used to compare scores
 /// across a series of decrypted results
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct DecryptResult {
     // cipher: Vec<u8>,
     decrypted_result: Vec<u8>,

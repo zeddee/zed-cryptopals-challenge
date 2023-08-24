@@ -5,6 +5,7 @@ const LOWERCASEOFFSET: i8 = b'a' as i8 - 26; // b'a' is 97 in utf-8, but represe
 const DIGITOFFSET: i8 = b'0' as i8 - 52; // b'0' is 48 in utf-8, and represents 0 in Base64 (haha). So the offset is b'0'-52=-4
 const PADDING: i8 = '=' as i8;
 
+#[derive(Copy, Clone)]
 pub struct Base64Adapter;
 
 impl Codec for Base64Adapter {

@@ -1,5 +1,6 @@
 use super::adapter::Codec;
 
+#[derive(Copy, Clone)]
 pub struct Hexadecimal;
 const UPPERCASEOFFSET: u8 = b'A'; // 65 in utf8, but 10 in hex (hex is case insensitive)
 const LOWERCASEOFFSET: u8 = b'a'; // 97 in utf8, but 10 in hex

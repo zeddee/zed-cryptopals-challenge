@@ -1,6 +1,7 @@
 use crate::codec::adapter::Codec;
-use crate::codec::hex::Hexadecimal;
 use crate::crack::DecryptResult;
+use std::sync::Arc;
+use std::thread;
 
 // Read a series of characters and assign a score for each.
 // The higher the score, the more ASCII characters are in the input data,
@@ -25,36 +26,66 @@ pub fn ascii_score(score_me: Vec<u8>) -> usize {
         .fold(0, |x, acc| x + acc as usize)
 }
 
-pub fn brute<T: Codec>(codec: &T, crypt_text: &str) -> Vec<u8> {
+/// Perform a brute force attack on ``crypt_text`` using
+/// a single byte cipher, operating in the encoding format specified by `codec`.
+pub fn brute<T>(codec: &T, crypt_text: &str) -> Vec<u8>
+where
+    T: Codec + Copy + std::marker::Sync + std::marker::Send + 'static,
+{
     let mut leader = DecryptResult {
         // cipher: vec![0],
         score: 0,
         decrypted_result: vec![0],
     };
-    let mut brute_cipher: u8 = 0;
+    let codec: Arc<T> = Arc::new(*codec);
+    let brute_cipher_max: u8 = 255;
 
-    // assume cipher is any one byte character
-    // brute force by trying all one byte characters.
-    while brute_cipher < 255 {
-        let cipher = Hexadecimal {}.encode(&[brute_cipher]);
+    let mut queue: Vec<thread::JoinHandle<DecryptResult>> = Vec::new();
+    for i in 0..=brute_cipher_max {
+        let codec: Arc<T> = Arc::clone(&codec);
+        queue.push(async_brute_sub(
+            &codec,
+            crypt_text.as_bytes().to_vec(),
+            vec![i],
+        ))
+    }
 
-        let decrypt_res = Hexadecimal {}
-            .decode(xor_decrypt(codec, crypt_text.as_bytes(), cipher.as_slice()).as_slice());
+    for q in queue {
+        if let Ok(res) = q.join() {
+            if leader.score < res.score {
+                leader = res
+            }
+        }
+    }
 
+    leader.decrypted_result
+}
+
+/// Provide an async helper function for [crate::crack::xor::brute]
+/// to run [crate::crack::xor::xor_decrypt]
+/// asynchronously.
+fn async_brute_sub<'a, 'b, T>(
+    codec: &Arc<T>,
+    crypt_text: Vec<u8>,
+    cipher: Vec<u8>,
+) -> thread::JoinHandle<DecryptResult>
+where
+    T: Codec + std::marker::Sync + std::marker::Send + 'static,
+{
+    let codec = Arc::clone(codec);
+    thread::spawn(move || {
+        let cipher_hex = codec.encode(cipher.as_slice());
+        let decrypt_res = codec.decode(
+            xor_decrypt(codec.as_ref(), crypt_text.as_slice(), cipher_hex.as_slice()).as_slice(),
+        );
         let current_ascii_score = DecryptResult {
             score: ascii_score(decrypt_res.clone()),
             //cipher: cipher,
             decrypted_result: decrypt_res,
         };
 
-        if leader.score < current_ascii_score.score {
-            leader = current_ascii_score
-        }
-
-        brute_cipher += 1;
-    }
-
-    leader.decrypted_result
+        current_ascii_score
+    })
 }
 
 /* Limitation -- we zip the two byte slices,
@@ -100,6 +131,7 @@ pub fn xor_encrypt<T: Codec>(codec: &T, content: &[u8], cipher: &[u8]) -> Vec<u8
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::codec::hex::Hexadecimal;
 
     fn factory() -> Hexadecimal {
         Hexadecimal {}
