@@ -88,27 +88,14 @@ where
     })
 }
 
-/* Limitation -- we zip the two byte slices,
-which truncates both slices to the length of the shorter slice in the resulting (&[u8], &[u8]) tuple.
- */
-fn xor_two_hexes<T: Codec>(codec: &T, hex1: &[u8], hex2: &[u8]) -> Vec<u8> {
-    let d1 = codec.decode(hex1);
-    let d2 = codec.decode(hex2);
-
-    let res = d1
-        .iter()
-        .zip(d2.iter())
-        .map(|(l, h)| l ^ h)
-        .collect::<Vec<u8>>();
-
-    codec.encode(res.as_slice())
-}
-
-pub fn xor_decrypt<T: Codec>(codec: &T, crypt_text: &[u8], cipher: &[u8]) -> Vec<u8> {
-    crypt_text
-        .chunks(cipher.len())
-        .flat_map(|x| xor_two_hexes(codec, x, &cipher))
-        .collect()
+/// Decrypt byte-slice of content with a given key, using repeated key xor.
+pub fn xor_decrypt<T: Codec>(codec: &T, encoded_content: &[u8], encoded_key: &[u8]) -> Vec<u8> {
+    let mut res = codec.decode(encoded_content);
+    let key = codec.decode(encoded_key);
+    for k in key {
+        res = res.iter().map(|x| x ^ k).collect::<Vec<u8>>();
+    }
+    codec.encode(&res)
 }
 
 pub fn xor_encrypt<T: Codec>(codec: &T, content: &[u8], cipher: &[u8]) -> Vec<u8> {
@@ -158,19 +145,6 @@ mod tests {
             res.iter().map(|c| *c as char).collect::<String>(),
             "Cooking MC's like a pound of bacon"
         );
-    }
-
-    #[test]
-    fn test_xor_two_hexes() {
-        let case = (
-            "1c0111001f010100061a024b53535009181c".as_bytes(),
-            "686974207468652062756c6c277320657965".as_bytes(),
-            "746865206b696420646f6e277420706c6179".as_bytes(),
-        );
-
-        let res = xor_two_hexes(&factory(), case.0, case.1);
-
-        assert_eq!(res, case.2);
     }
 
     #[test]
