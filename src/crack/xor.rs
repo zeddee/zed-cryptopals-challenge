@@ -98,21 +98,18 @@ pub fn xor_decrypt<T: Codec>(codec: &T, encoded_content: &[u8], encoded_key: &[u
     codec.encode(&res)
 }
 
-pub fn xor_encrypt<T: Codec>(codec: &T, content: &[u8], cipher: &[u8]) -> Vec<u8> {
+/// XOR encrypts ASCII byte-slice `content` with a byte slice `key`.
+pub fn xor_encrypt<T: Codec>(codec: &T, content: &[u8], key: &[u8]) -> Vec<u8> {
     let encoded_content = codec.encode(content);
 
+    for mut b in &encoded_content {
+        let mut _buf: u8 = 0;
+        for k in key {
+            _buf = b ^ k;
+            b = &_buf;
+        }
+    }
     encoded_content
-        .chunks(cipher.len())
-        .flat_map(|x| {
-            let d1 = codec.decode(x);
-            let d2 = codec.decode(cipher);
-
-            d1.iter()
-                .zip(d2.iter())
-                .map(|(l, h)| l ^ h)
-                .collect::<Vec<u8>>()
-        })
-        .collect()
 }
 
 #[cfg(test)]
@@ -177,16 +174,30 @@ mod tests {
         );
     }
 
+    /// Simulate a line break in a text file, as opposed to encoded `\r\n` chars
     #[test]
     fn test_multiline_xor_decrypt() {
-        // simulate a line break in a text file, as opposed to encoded `\r\n` chars
-        let input = "4275726e696e672027656d2c20696620796f752061696e277420717569636b20616e64206e696d626c650d\n4920676f206372617a79207768656e2049206865617220612063796d62616c";
+        let input = "4275726e696e672027656d2c20696620796f752061696e277420717569636b20616e64206e696d626c650d\n4920676f206372617a79207768656e2049206865617220612063796d62616c".as_bytes();
         let expected = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
         let codec = factory();
-        let res = xor_decrypt(&codec, input.as_bytes(), &[1]);
+        let res = xor_decrypt(&codec, input, &[1]);
 
         assert_eq!(
             codec.decode_to_string(res.as_slice()),
+            expected,
+        )
+    }
+
+    /// Simulate a line break in a text file, as opposed to encoded `\r\n` chars
+    #[test]
+    fn test_multiline_xor_encrypt() {
+        let input = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
+        let expected = "4275726e696e672027656d2c20696620796f752061696e277420717569636b20616e64206e696d626c650a4920676f206372617a79207768656e2049206865617220612063796d62616c";
+        let codec = factory();
+        let res = xor_encrypt(&codec, input.as_bytes(), &[1]);
+        println!("as there any result? {:?}", res);
+        assert_eq!(
+            res.iter().map(|&c| c as char).collect::<String>(),
             expected,
         )
     }
