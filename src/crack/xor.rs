@@ -89,13 +89,43 @@ where
 }
 
 /// Decrypt byte-slice of content with a given key, using repeated key xor.
-pub fn xor_decrypt<T: Codec>(codec: &T, encoded_content: &[u8], encoded_key: &[u8]) -> Vec<u8> {
-    let mut res = codec.decode(encoded_content);
-    let key = codec.decode(encoded_key);
-    for k in key {
-        res = res.iter().map(|x| x ^ k).collect::<Vec<u8>>();
+/// Returns an encoded vector of bytes.
+pub fn xor_decrypt<T: Codec>(codec: &T, content: &[u8], key: &[u8]) -> Vec<u8> {
+    let content_string = content.iter().map(|c| *c as char).collect::<String>();
+    let key = codec.decode(key);
+
+    let mut outer_res: Vec<Vec<u8>> = Vec::new();
+
+    // Split content into lines
+    for line in content_string.lines() {
+        // Use `codec` to decode this line
+        let mut res = codec.decode(line.as_bytes());
+        // For each byte (`k`) in `key`, xor all bytes in res
+        for k in key.as_slice() {
+            res = res.iter().map(|x| x ^ k).collect::<Vec<u8>>();
+        }
+        // Push result to `outer_res`.
+        outer_res.push(codec.encode(&res))
     }
-    codec.encode(&res)
+
+    // Create buffer for joined output
+    let mut joined: Vec<u8> = Vec::new();
+
+    // Convoluted logic for adding newlines `\n` if
+    // that line is not the last 'line' of the resulting decrypted text.
+    let mut it = outer_res.iter().peekable();
+    while it.peek().is_some() {
+        if let Some(inner_res) = it.next() {
+            for res in inner_res {
+                joined.push(*res);
+            }
+            if it.peek().is_some() {
+                joined.push(b'0');
+                joined.push(b'A');
+            }
+        }
+    }
+    joined
 }
 
 /// XOR encrypts ASCII byte-slice `content` with a byte slice `key`.
