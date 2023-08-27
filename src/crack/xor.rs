@@ -208,14 +208,12 @@ mod tests {
     #[test]
     fn test_multiline_xor_decrypt() {
         let input = "4275726e696e672027656d2c20696620796f752061696e277420717569636b20616e64206e696d626c65\n4920676f206372617a79207768656e2049206865617220612063796d62616c".as_bytes();
-        let expected = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
+        let expected =
+            "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
         let codec = factory();
         let res = xor_decrypt(&codec, input, &[1]);
 
-        assert_eq!(
-            codec.decode_to_string(res.as_slice()),
-            expected,
-        )
+        assert_eq!(codec.decode_to_string(res.as_slice()), expected,)
     }
 
     /// Simulate a line break in a text file, as opposed to encoded `\r\n` chars
@@ -226,9 +224,6 @@ mod tests {
         let codec = factory();
         let res = xor_encrypt(&codec, input.as_bytes(), &[1]);
         println!("as there any result? {:?}", res);
-        assert_eq!(
-            res.iter().map(|&c| c as char).collect::<String>(),
-            expected,
-        )
+        assert_eq!(res.iter().map(|&c| c as char).collect::<String>(), expected,)
     }
 }
