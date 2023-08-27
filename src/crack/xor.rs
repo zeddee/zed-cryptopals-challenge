@@ -176,4 +176,18 @@ mod tests {
             "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
         );
     }
+
+    #[test]
+    fn test_multiline_xor_decrypt() {
+        // simulate a line break in a text file, as opposed to encoded `\r\n` chars
+        let input = "4275726e696e672027656d2c20696620796f752061696e277420717569636b20616e64206e696d626c650d\n4920676f206372617a79207768656e2049206865617220612063796d62616c";
+        let expected = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
+        let codec = factory();
+        let res = xor_decrypt(&codec, input.as_bytes(), &[1]);
+
+        assert_eq!(
+            codec.decode_to_string(res.as_slice()),
+            expected,
+        )
+    }
 }
