@@ -197,32 +197,47 @@ mod tests {
 
     #[test]
     fn test_xor_decrypt() {
-        let case = (
-            "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736".as_bytes(),
-            "58".as_bytes(),
-        );
+        let cases = [
+            (
+                "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736".as_bytes(),
+                "58".as_bytes(),
+            ),
+            (
+                "1b38373c31393f7715147f24783b313c3d77397728382d393c773731783539343739".as_bytes(),
+                "5857".as_bytes(),
+            ),
+        ];
 
-        let res = xor_decrypt(&factory(), case.0, case.1);
+        for case in cases {
+            let res = xor_decrypt(&factory(), case.0, case.1);
 
-        assert_eq!(
-            Hexadecimal {}.decode_to_string(res.as_slice()),
-            "Cooking MC's like a pound of bacon"
-        );
+            assert_eq!(
+                Hexadecimal {}.decode_to_string(res.as_slice()),
+                "Cooking MC's like a pound of bacon"
+            );
+        }
     }
 
     #[test]
     fn test_xor_encrypt() {
-        let case = (
-            "Cooking MC's like a pound of bacon".as_bytes(),
-            "58".as_bytes(),
-        );
+        let cases = [
+            (
+                "Cooking MC's like a pound of bacon".as_bytes(),
+                "58".as_bytes(),
+                "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736",
+            ),
+            (
+                "Cooking MC's like a pound of bacon".as_bytes(),
+                "5857".as_bytes(),
+                "1b38373c31393f7715147f24783b313c3d77397728382d393c773731783539343739",
+            ),
+        ];
 
-        let res = xor_encrypt(&factory(), case.0, case.1);
+        for case in cases {
+            let res = xor_encrypt(&factory(), case.0, case.1);
 
-        assert_eq!(
-            &factory().encode_to_string(res.as_slice()),
-            "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
-        );
+            assert_eq!(&factory().encode_to_string(res.as_slice()), case.2,);
+        }
     }
 
     /// Simulate a line break in a text file, as opposed to encoded `\r\n` chars
