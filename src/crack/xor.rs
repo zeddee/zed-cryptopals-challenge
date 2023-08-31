@@ -28,12 +28,12 @@ pub fn ascii_score(score_me: Vec<u8>) -> usize {
 
 /// Perform a brute force attack on ``crypt_text`` using
 /// a single byte cipher, operating in the encoding format specified by `codec`.
-pub fn brute<T>(codec: &T, crypt_text: &str) -> Vec<u8>
+pub fn brute<T>(codec: &T, crypt_text: &str) -> DecryptResult
 where
     T: Codec + Copy + std::marker::Sync + std::marker::Send + 'static,
 {
     let mut leader = DecryptResult {
-        // cipher: vec![0],
+        key: vec![0],
         score: 0,
         decrypted_result: vec![0],
     };
@@ -58,7 +58,7 @@ where
         }
     }
 
-    leader.decrypted_result
+    leader
 }
 
 /// Provide an async helper function for [crate::crack::xor::brute]
@@ -79,8 +79,8 @@ where
             xor_decrypt(codec.as_ref(), crypt_text.as_slice(), cipher_hex.as_slice()).as_slice(),
         );
         let current_ascii_score = DecryptResult {
+            key: cipher_hex,
             score: ascii_score(decrypt_res.clone()),
-            //cipher: cipher,
             decrypted_result: decrypt_res,
         };
 
@@ -91,19 +91,29 @@ where
 /// Decrypt byte-slice of content with a given key, using repeated key xor.
 /// Returns an encoded vector of bytes.
 pub fn xor_decrypt<T: Codec>(codec: &T, content: &[u8], key: &[u8]) -> Vec<u8> {
-    let content_string = content.iter().map(|c| *c as char).collect::<String>();
     let key = codec.decode(key);
+    let keyslice = key.as_slice();
 
+    // Decrypt step 1: Split at newlines in content, make iterable to operate on
+    let content_string = content.iter().map(|c| *c as char).collect::<String>();
+    let content_string_lines = content_string.lines();
+
+    // Decrypt step 2: Run XOR at byte level for each line
     let mut outer_res: Vec<Vec<u8>> = Vec::new();
-
-    // Split content into lines
-    for line in content_string.lines() {
+    for line in content_string_lines {
         // Use `codec` to decode this line
-        let mut res = codec.decode(line.as_bytes());
-        // For each byte (`k`) in `key`, xor all bytes in res
-        for k in key.as_slice() {
-            res = res.iter().map(|x| x ^ k).collect::<Vec<u8>>();
-        }
+        let decoded_line = codec.decode(line.as_bytes());
+
+        let res = decoded_line
+            .chunks(keyslice.len())
+            .flat_map(|chunk| {
+                chunk
+                    .iter()
+                    .zip(keyslice)
+                    .map(|(l, h)| l ^ h)
+                    .collect::<Vec<u8>>()
+            })
+            .collect::<Vec<u8>>();
         // Push result to `outer_res`.
         outer_res.push(codec.encode(&res))
     }
@@ -128,18 +138,26 @@ pub fn xor_decrypt<T: Codec>(codec: &T, content: &[u8], key: &[u8]) -> Vec<u8> {
     joined
 }
 
-/// XOR encrypts ASCII byte-slice `content` with a byte slice `key`.
+/// XOR encrypts ASCII byte-slice `content`
+/// with an encoded byte slice `key`.
 pub fn xor_encrypt<T: Codec>(codec: &T, content: &[u8], key: &[u8]) -> Vec<u8> {
-    let encoded_content = codec.encode(content);
+    // encode, because we need to iterate over the correct chunk size
+    // assume `key` is already encoded
+    let encoded = codec.encode(content);
 
-    for mut b in &encoded_content {
-        let mut _buf: u8 = 0;
-        for k in key {
-            _buf = b ^ k;
-            b = &_buf;
-        }
-    }
-    encoded_content
+    // Must process in chunk sizes that match the byte-slice size of the key.
+    encoded
+        .chunks(key.len())
+        .flat_map(|chunk| {
+            let decoded_chunk = codec.decode(chunk);
+            let inner_key = codec.decode(key);
+            decoded_chunk
+                .iter()
+                .zip(inner_key)
+                .map(|(l, h)| l ^ h)
+                .collect::<Vec<u8>>()
+        })
+        .collect::<Vec<u8>>()
 }
 
 #[cfg(test)]
@@ -169,7 +187,7 @@ mod tests {
         );
 
         assert_eq!(
-            res.iter().map(|c| *c as char).collect::<String>(),
+            res.decrypted_result.iter().map(|c| *c as char).collect::<String>(),
             "Cooking MC's like a pound of bacon"
         );
     }
@@ -199,7 +217,7 @@ mod tests {
         let res = xor_encrypt(&factory(), case.0, case.1);
 
         assert_eq!(
-            Hexadecimal {}.encode_to_string(res.as_slice()),
+            &factory().encode_to_string(res.as_slice()),
             "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
         );
     }
@@ -207,11 +225,12 @@ mod tests {
     /// Simulate a line break in a text file, as opposed to encoded `\r\n` chars
     #[test]
     fn test_multiline_xor_decrypt() {
-        let input = "4275726e696e672027656d2c20696620796f752061696e277420717569636b20616e64206e696d626c65\n4920676f206372617a79207768656e2049206865617220612063796d62616c".as_bytes();
+        let input = "1a2d2a3631363f787f3d357478313e7821372d783931367f2c78292d313b337839363c783631353a343d5211783f37783b2a392221782f303d36781178303d392a7839783b21353a3934".as_bytes();
         let expected =
             "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
+        let key = "58".as_bytes();
         let codec = factory();
-        let res = xor_decrypt(&codec, input, &[1]);
+        let res = xor_decrypt(&codec, input, key);
 
         assert_eq!(codec.decode_to_string(res.as_slice()), expected,)
     }
@@ -220,10 +239,10 @@ mod tests {
     #[test]
     fn test_multiline_xor_encrypt() {
         let input = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
-        let expected = "4275726e696e672027656d2c20696620796f752061696e277420717569636b20616e64206e696d626c650a4920676f206372617a79207768656e2049206865617220612063796d62616c";
+        let expected = "1a2d2a3631363f787f3d357478313e7821372d783931367f2c78292d313b337839363c783631353a343d5211783f37783b2a392221782f303d36781178303d392a7839783b21353a3934";
+        let key = "58".as_bytes();
         let codec = factory();
-        let res = xor_encrypt(&codec, input.as_bytes(), &[1]);
-        println!("as there any result? {:?}", res);
-        assert_eq!(res.iter().map(|&c| c as char).collect::<String>(), expected,)
+        let res = xor_encrypt(&codec, input.as_bytes(), key);
+        assert_eq!(codec.encode_to_string(res.as_slice()), expected,)
     }
 }
