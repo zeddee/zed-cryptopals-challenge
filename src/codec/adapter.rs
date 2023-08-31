@@ -60,7 +60,7 @@ pub trait Codec {
             .collect::<String>()
     }
 
-    /// Encode a byte slice using [Codec::raw_decode].
+    /// Decode a byte slice using [Codec::raw_decode].
     fn decode(&self, data: &[u8]) -> Vec<u8> {
         data.chunks(4)
             .flat_map(|c| self.raw_decode(c))
@@ -68,7 +68,7 @@ pub trait Codec {
     }
 
     /// Convenience function that wraps [Codec::decode]
-    /// to encode a byte slice as a String in the target encoding format.
+    /// to decode a byte slice as a String in the target encoding format.
     fn decode_to_string(&self, data: &[u8]) -> String {
         self.decode(data)
             .iter()
