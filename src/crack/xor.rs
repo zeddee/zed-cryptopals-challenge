@@ -187,7 +187,10 @@ mod tests {
         );
 
         assert_eq!(
-            res.decrypted_result.iter().map(|c| *c as char).collect::<String>(),
+            res.get_decrypted_result()
+                .iter()
+                .map(|c| *c as char)
+                .collect::<String>(),
             "Cooking MC's like a pound of bacon"
         );
     }
