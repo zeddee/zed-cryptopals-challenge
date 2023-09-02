@@ -27,3 +27,38 @@ impl DecryptResult {
         self.key.clone()
     }
 }
+
+/// The Hamming distance between two byte slices is the number of bits that
+/// are different in these two byte slices.
+pub fn hamming_distance(b1: &[u8], b2: &[u8]) -> usize {
+    let table = b1.iter().zip(b2);
+    let mut out: usize = 0;
+    for (x, y) in table {
+      let xor_result = x ^ y;
+      out += xor_result.count_ones() as usize;
+    }
+    out
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use crate::codec::b64::Base64Adapter;
+
+  fn _factory() -> Base64Adapter {
+    Base64Adapter{}
+  }
+
+  #[test]
+  fn hamming_distance_wokka() {
+    let cases = [(
+      "this is a test",
+      "wokka wokka!!!",
+      37,
+    )];
+    for case in cases {
+      let h = hamming_distance(case.0.as_bytes(), case.1.as_bytes());
+      assert_eq!(h, case.2);
+    }
+  }
+}
