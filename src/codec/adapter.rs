@@ -67,7 +67,7 @@ pub trait Codec {
             .collect::<Vec<u8>>()
     }
 
-    /// Convenience function that wraps [Codec::decode]
+    /// Convenience function that wraps [Codec::to_utf8]
     /// to decode a byte slice as a String in the target encoding format.
     fn to_utf8_string(&self, data: &[u8]) -> String {
         self.to_utf8(data)

@@ -109,7 +109,7 @@ impl Codec for Base64Adapter {
         .collect()
     }
 
-    /// Explicitly rewrite the [crate::codec::adapter::Codec::decode] method,
+    /// Explicitly rewrite the [crate::codec::adapter::Codec::to_utf8] method,
     /// because Base64 requires a different sequence of operations over
     /// the processed byte chunks.
     fn to_utf8(&self, data: &[u8]) -> Vec<u8> {
