@@ -243,9 +243,11 @@ mod tests {
     /// Simulate a line break in a text file, as opposed to encoded `\r\n` chars
     #[test]
     fn test_multiline_xor_decrypt() {
-        let input = "1a2d2a3631363f787f3d357478313e7821372d783931367f2c78292d313b337839363c783631353a343d5211783f37783b2a392221782f303d36781178303d392a7839783b21353a3934".as_bytes();
-        let expected =
-            "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
+        let input = "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272
+a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"
+            .as_bytes();
+        let expected = "Burning 'em, if you ain't quick and nimble
+I go crazy when I hear a cymbal";
         let key = "58".as_bytes();
         let codec = factory();
         let res = xor_decrypt(&codec, input, key);
@@ -256,17 +258,21 @@ mod tests {
     /// Simulate a line break in a text file, as opposed to encoded `\r\n` chars
     #[test]
     fn test_multiline_xor_encrypt() {
-        let input = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
-        let expected = "1a2d2a3631363f787f3d357478313e7821372d783931367f2c78292d313b337839363c783631353a343d5211783f37783b2a392221782f303d36781178303d392a7839783b21353a3934";
+        let input = "Burning 'em, if you ain't quick and nimble
+I go crazy when I hear a cymbal";
+        let expected = "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272
+a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f";
         let key = "58".as_bytes();
         let codec = factory();
         let res = xor_encrypt(&codec, input.as_bytes(), key);
         assert_eq!(codec.encode_to_string(res.as_slice()), expected,)
     }
 
-    const REPEATEDXOR_UNENCRYPTED: &str =
-        "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
-    const REPEATEDXOR_ENCRYPTED: &str = "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f";
+    const REPEATEDXOR_UNENCRYPTED: &str = "Burning 'em, if you ain't quick and nimble
+I go crazy when I hear a cymbal";
+    const REPEATEDXOR_ENCRYPTED: &str =
+        "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272
+a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f";
 
     #[test]
     fn test_encrypt_repeated_xor() {
