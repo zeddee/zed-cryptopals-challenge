@@ -10,14 +10,14 @@ impl Codec for Hexadecimal {
     fn get_chunksize(&self) -> usize {
         2
     }
-    fn map_value_to_char(&self, v: u8) -> Option<u8> {
+    fn map_codepoint_to_utf8(&self, v: u8) -> Option<u8> {
         match v {
             0..=9 => Some(v + DIGITOFFSET),
             10..=35 => Some(v - 10 + LOWERCASEOFFSET), // Hex is case insensitive
             _ => None,
         }
     }
-    fn map_char_to_value(&self, c: u8) -> Option<u8> {
+    fn map_utf8_to_codepoint(&self, c: u8) -> Option<u8> {
         match c {
             b'0'..=b'9' => Some(c - DIGITOFFSET),
             b'a'..=b'z' => Some(c - LOWERCASEOFFSET + 10), // Hex is case insensitive
@@ -30,7 +30,7 @@ impl Codec for Hexadecimal {
         chunk
             .iter()
             .flat_map(|c| vec![(c & 0b11110000) >> 4, c & 0b00001111])
-            .filter_map(|c| self.map_value_to_char(c))
+            .filter_map(|c| self.map_codepoint_to_utf8(c))
             .collect::<Vec<u8>>()
     }
 
@@ -42,8 +42,8 @@ impl Codec for Hexadecimal {
     So when we decode hex to bytes, we want to remove the 4 bits of padding
     and concatenate each of the actual important 4 bits into an 8-bit space.
     */
-    fn raw_decode(&self, data: &[u8]) -> Vec<u8> {
-        let mut raw = data.iter().filter_map(|c| self.map_char_to_value(*c));
+    fn raw_to_utf8(&self, data: &[u8]) -> Vec<u8> {
+        let mut raw = data.iter().filter_map(|c| self.map_utf8_to_codepoint(*c));
         let mut res: Vec<u8> = Vec::new();
 
         while let (Some(h), Some(l)) = (raw.next(), raw.next()) {
@@ -119,7 +119,7 @@ mod tests {
 
         let input_data = input_str.as_bytes();
 
-        assert_eq!(factory().decode_to_string(input_data), expected);
+        assert_eq!(factory().to_utf8_string(input_data), expected);
     }
 
     #[test]
@@ -129,7 +129,7 @@ mod tests {
 
         let input_data = input_str.as_bytes();
 
-        assert_eq!(factory().decode_to_string(input_data), expected);
+        assert_eq!(factory().to_utf8_string(input_data), expected);
     }
 
     #[test]
@@ -139,7 +139,7 @@ mod tests {
 
         let input_data = input_str.as_bytes();
 
-        assert_eq!(factory().decode_to_string(input_data), expected);
+        assert_eq!(factory().to_utf8_string(input_data), expected);
     }
 
     #[test]
@@ -149,7 +149,7 @@ mod tests {
 
         let input = input_str.as_bytes();
 
-        assert_eq!(factory().decode_to_string(input), expected);
+        assert_eq!(factory().to_utf8_string(input), expected);
     }
 
     #[test]
@@ -159,6 +159,6 @@ mod tests {
 
         let input_data = input_str.as_bytes();
 
-        assert_eq!(factory().decode_to_string(input_data), expected);
+        assert_eq!(factory().to_utf8_string(input_data), expected);
     }
 }

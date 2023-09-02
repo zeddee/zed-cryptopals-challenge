@@ -10,22 +10,22 @@
 pub trait Codec {
     /// Provide a mapping from code points from the target encoding format
     /// to UTF-8 code points.
-    fn map_value_to_char(&self, v: u8) -> Option<u8>;
+    fn map_codepoint_to_utf8(&self, v: u8) -> Option<u8>;
 
     /// Provide a mapping from UTF-8 code points to code points for the target encoding format.
-    fn map_char_to_value(&self, c: u8) -> Option<u8>;
+    fn map_utf8_to_codepoint(&self, c: u8) -> Option<u8>;
 
     /// Provide low-level transformation of content
     /// from one encoding format to another
     /// by manipulating the bytes that represent that content,
-    /// and then applying the mapping provided by [Codec::map_value_to_char].
+    /// and then applying the mapping provided by [Codec::map_codepoint_to_utf8].
     fn raw_encode(&self, v: &[u8]) -> Vec<u8>;
 
     /// Provide low-level transformation of content
     /// from one encoding format to another
     /// by manipulating the bytes that represent that content,
-    /// and then applying the mapping provided by [Codec::map_value_to_char].
-    fn raw_decode(&self, v: &[u8]) -> Vec<u8>;
+    /// and then applying the mapping provided by [Codec::map_codepoint_to_utf8].
+    fn raw_to_utf8(&self, v: &[u8]) -> Vec<u8>;
 
     /// Helper that just stores and returns the number of bytes this Codec instance
     /// should expect to operate on for a given encoding/decoding implementation.
@@ -60,17 +60,17 @@ pub trait Codec {
             .collect::<String>()
     }
 
-    /// Decode a byte slice using [Codec::raw_decode].
-    fn decode(&self, data: &[u8]) -> Vec<u8> {
+    /// Decode a byte slice using [Codec::raw_to_utf8].
+    fn to_utf8(&self, data: &[u8]) -> Vec<u8> {
         data.chunks(4)
-            .flat_map(|c| self.raw_decode(c))
+            .flat_map(|c| self.raw_to_utf8(c))
             .collect::<Vec<u8>>()
     }
 
     /// Convenience function that wraps [Codec::decode]
     /// to decode a byte slice as a String in the target encoding format.
-    fn decode_to_string(&self, data: &[u8]) -> String {
-        self.decode(data)
+    fn to_utf8_string(&self, data: &[u8]) -> String {
+        self.to_utf8(data)
             .iter()
             .map(|v| (*v as char).to_string())
             .collect::<String>()

@@ -75,7 +75,7 @@ where
     let codec = Arc::clone(codec);
     thread::spawn(move || {
         let cipher_hex = codec.encode(cipher.as_slice());
-        let decrypt_res = codec.decode(
+        let decrypt_res = codec.to_utf8(
             xor_decrypt(codec.as_ref(), crypt_text.as_slice(), cipher_hex.as_slice()).as_slice(),
         );
         let current_ascii_score = DecryptResult {
@@ -91,7 +91,7 @@ where
 /// Decrypt byte-slice of content with a given key, using repeated key xor.
 /// Returns an encoded vector of bytes.
 pub fn xor_decrypt<T: Codec>(codec: &T, content: &[u8], key: &[u8]) -> Vec<u8> {
-    let key = codec.decode(key);
+    let key = codec.to_utf8(key);
     let keyslice = key.as_slice();
 
     // Decrypt step 1: Split at newlines in content, make iterable to operate on
@@ -102,7 +102,7 @@ pub fn xor_decrypt<T: Codec>(codec: &T, content: &[u8], key: &[u8]) -> Vec<u8> {
     let mut outer_res: Vec<Vec<u8>> = Vec::new();
     for line in content_string_lines {
         // Use `codec` to decode this line
-        let decoded_line = codec.decode(line.as_bytes());
+        let decoded_line = codec.to_utf8(line.as_bytes());
 
         let res = decoded_line
             .chunks(keyslice.len())
@@ -149,8 +149,8 @@ pub fn xor_encrypt<T: Codec>(codec: &T, content: &[u8], key: &[u8]) -> Vec<u8> {
     encoded
         .chunks(key.len())
         .flat_map(|chunk| {
-            let decoded_chunk = codec.decode(chunk);
-            let inner_key = codec.decode(key);
+            let decoded_chunk = codec.to_utf8(chunk);
+            let inner_key = codec.to_utf8(key);
             decoded_chunk
                 .iter()
                 .zip(inner_key)
@@ -212,7 +212,7 @@ mod tests {
             let res = xor_decrypt(&factory(), case.0, case.1);
 
             assert_eq!(
-                Hexadecimal {}.decode_to_string(res.as_slice()),
+                Hexadecimal {}.to_utf8_string(res.as_slice()),
                 "Cooking MC's like a pound of bacon"
             );
         }
@@ -250,7 +250,7 @@ mod tests {
         let codec = factory();
         let res = xor_decrypt(&codec, input, key);
 
-        assert_eq!(codec.decode_to_string(res.as_slice()), expected,)
+        assert_eq!(codec.to_utf8_string(res.as_slice()), expected,)
     }
 
     /// Simulate a line break in a text file, as opposed to encoded `\r\n` chars

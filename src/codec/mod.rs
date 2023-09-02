@@ -16,12 +16,12 @@ use crate::codec::adapter::Codec;
 
 /// Convenience function that wraps the `encode_to_string` method of [crate::codec::b64::Base64Adapter]
 pub fn hex_to_b64_string(data: &str) -> String {
-    b64::Base64Adapter {}.encode_to_string(&hex::Hexadecimal {}.decode(data.as_bytes()).as_slice())
+    b64::Base64Adapter {}.encode_to_string(&hex::Hexadecimal {}.to_utf8(data.as_bytes()).as_slice())
 }
 
 /// Convenience function that wraps the `encode_to_string` method of [crate::codec::hex::Hexadecimal].
 pub fn b64_to_hex_string(data: &str) -> String {
-    hex::Hexadecimal {}.encode_to_string(&b64::Base64Adapter {}.decode(data.as_bytes()).as_slice())
+    hex::Hexadecimal {}.encode_to_string(&b64::Base64Adapter {}.to_utf8(data.as_bytes()).as_slice())
 }
 
 #[cfg(test)]
