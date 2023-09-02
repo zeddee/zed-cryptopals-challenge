@@ -263,4 +263,31 @@ mod tests {
         let res = xor_encrypt(&codec, input.as_bytes(), key);
         assert_eq!(codec.encode_to_string(res.as_slice()), expected,)
     }
+
+    const REPEATEDXOR_UNENCRYPTED: &str =
+        "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
+    const REPEATEDXOR_ENCRYPTED: &str = "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f";
+
+    #[test]
+    fn test_encrypt_repeated_xor() {
+        let codec = factory();
+        let key = codec.encode("ICE".as_bytes());
+
+        assert_eq!(
+            codec.encode_to_string(
+                xor_encrypt(&codec, REPEATEDXOR_UNENCRYPTED.as_bytes(), key.as_slice()).as_slice()
+            ),
+            REPEATEDXOR_ENCRYPTED,
+        );
+    }
+
+    #[test]
+    fn test_decrypt_repeated_xor() {
+        let codec = factory();
+        let key = codec.encode("ICE".as_bytes());
+        let res = codec.to_utf8_string(
+            xor_decrypt(&codec, REPEATEDXOR_ENCRYPTED.as_bytes(), key.as_slice()).as_slice(),
+        );
+        assert_eq!(res, REPEATEDXOR_UNENCRYPTED,);
+    }
 }

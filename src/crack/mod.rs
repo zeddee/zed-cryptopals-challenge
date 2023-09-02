@@ -4,7 +4,6 @@
 //! Implemented as Zed works through <https://cryptopals.com/>.
 
 pub mod xor;
-pub mod xor_repeating_key;
 
 /// DecryptResult is used to store
 /// a decrypted vector of bytes,
