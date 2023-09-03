@@ -104,12 +104,12 @@ impl CodecAPI for Base64 {
         .collect()
     }
     /// Set expected length of byte chunks to 3.
-    /// See [crate::codec::adapter::Codec::get_chunksize].
+    /// See [crate::codec::adapter::CodecAPI::get_chunksize].
     fn get_chunksize(&self) -> usize {
         3
     }
 
-    /// Explicitly rewrite the [crate::codec::adapter::Codec::to_plain] method,
+    /// Explicitly rewrite the [crate::codec::adapter::CodecAPI::to_plain] method,
     /// because Base64 requires a different sequence of operations over
     /// the processed byte chunks.
     fn to_plain(&self, data: &[u8]) -> Vec<u8> {
