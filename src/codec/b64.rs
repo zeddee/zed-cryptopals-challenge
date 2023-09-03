@@ -6,8 +6,8 @@ const DIGITOFFSET: i8 = b'0' as i8 - 52; // b'0' is 48 in utf-8, and represents 
 const PADDING: i8 = '=' as i8;
 
 #[derive(Copy, Clone)]
-pub struct Base64Adapter;
-impl CodePointMap for Base64Adapter {
+pub struct Base64;
+impl CodePointMap for Base64 {
     fn map_codepoint_to_plain(&self, v: u8) -> Option<u8> {
         let v = v as i8;
         let ascii_value = match v {
@@ -50,7 +50,7 @@ impl CodePointMap for Base64Adapter {
     }
 }
 
-impl CodecAPI for Base64Adapter {
+impl CodecAPI for Base64 {
     /// Bitwise operations to expand data in 3-byte chunks operating
     /// in an 8-bit space to 4-byte chunks operating in a 6-bit space.
     fn raw_encode(&self, chunk: &[u8]) -> Vec<u8> {
@@ -128,15 +128,15 @@ impl CodecAPI for Base64Adapter {
     }
 }
 
-impl Codec for Base64Adapter {}
+impl Codec for Base64 {}
 
 #[cfg(test)]
 mod tests {
-    use super::Base64Adapter;
+    use super::Base64;
     use crate::codec::adapter::CodecAPI;
 
-    fn factory() -> Base64Adapter {
-        Base64Adapter {}
+    fn factory() -> Base64 {
+        Base64 {}
     }
 
     #[test]

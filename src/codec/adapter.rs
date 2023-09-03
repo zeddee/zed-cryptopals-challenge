@@ -1,7 +1,7 @@
 /// # Codec adapter
 /// Implement Codec to provide an adapter that
 /// implements the ability to encode and decode a given encoding format.
-/// This module provides implementations for [Base64][crate::codec::b64::Base64Adapter]
+/// This module provides implementations for [Base64][crate::codec::b64::Base64]
 /// and [Hexadecimal][crate::codec::hex::Hexadecimal] encodings.
 ///
 /// Codecs should allow you to:
@@ -43,7 +43,7 @@ pub trait CodecAPI {
     /// By default, returns `4` for the 4 byte chunks we expect to contain UTF8 characters.
     /// Change this when working with encodings that expect a different chunk size.
     /// For example:
-    /// - [crate::codec::b64::Base64Adapter] changes this to 3 because Base64 encoding expects 3 byte chunks
+    /// - [crate::codec::b64::Base64] changes this to 3 because Base64 encoding expects 3 byte chunks
     /// - [crate::codec::hex::Hexadecimal] changes this to 2 because Hexadecimal encoding expects 2 byte chunks
     ///
     /// Used in lieu of being able to declare `const` values in a trait.

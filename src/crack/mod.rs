@@ -43,10 +43,10 @@ pub fn hamming_distance(b1: &[u8], b2: &[u8]) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::codec::b64::Base64Adapter;
+    use crate::codec::b64::Base64;
 
-    fn _factory() -> Base64Adapter {
-        Base64Adapter {}
+    fn _factory() -> Base64 {
+        Base64 {}
     }
 
     #[test]

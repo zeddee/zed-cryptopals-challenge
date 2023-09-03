@@ -14,16 +14,14 @@ pub mod hex;
 
 use crate::codec::adapter::CodecAPI;
 
-/// Convenience function that wraps the `encode_to_string` method of [crate::codec::b64::Base64Adapter]
+/// Convenience function that wraps the `encode_to_string` method of [crate::codec::b64::Base64]
 pub fn hex_to_b64_string(data: &str) -> String {
-    b64::Base64Adapter {}
-        .encode_to_string(&hex::Hexadecimal {}.to_plain(data.as_bytes()).as_slice())
+    b64::Base64 {}.encode_to_string(&hex::Hexadecimal {}.to_plain(data.as_bytes()).as_slice())
 }
 
 /// Convenience function that wraps the `encode_to_string` method of [crate::codec::hex::Hexadecimal].
 pub fn b64_to_hex_string(data: &str) -> String {
-    hex::Hexadecimal {}
-        .encode_to_string(&b64::Base64Adapter {}.to_plain(data.as_bytes()).as_slice())
+    hex::Hexadecimal {}.encode_to_string(&b64::Base64 {}.to_plain(data.as_bytes()).as_slice())
 }
 
 #[cfg(test)]
