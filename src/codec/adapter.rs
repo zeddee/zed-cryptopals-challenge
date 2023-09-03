@@ -7,31 +7,38 @@
 /// Codecs should allow you to:
 /// - Transform a byte slice of UTF-8 code points to code points for the target encoding format.
 /// - Transform a byte slice of code points from the target encoding format to UTF-8 code points.
-pub trait Codec {
+///
+pub trait Codec: CodePointMap + CodecAPI {}
+
+pub trait CodePointMap {
     /// Provide a mapping from code points from the target encoding format
-    /// to UTF-8 code points.
-    fn map_codepoint_to_utf8(&self, v: u8) -> Option<u8>;
+    /// to plain text UTF-8 code points.
+    /// For example: Hexadecimal implementation of this function should provide mapping from '10' to 'a'.
+    fn map_codepoint_to_plain(&self, v: u8) -> Option<u8>;
 
-    /// Provide a mapping from UTF-8 code points to code points for the target encoding format.
-    fn map_utf8_to_codepoint(&self, c: u8) -> Option<u8>;
+    /// Provide a mapping from plain text UTF-8 code points to code points for the target encoding format.
+    /// For example: Hexadecimal implementation of this function should provide mapping from 'a' to '10'.
+    fn map_plain_to_codepoint(&self, c: u8) -> Option<u8>;
+}
 
+pub trait CodecAPI {
     /// Provide low-level transformation of content
     /// from one encoding format to another
     /// by manipulating the bytes that represent that content,
-    /// and then applying the mapping provided by [Codec::map_codepoint_to_utf8].
+    /// and then applying the mapping provided by [CodePointMap::map_codepoint_to_plain].
     fn raw_encode(&self, v: &[u8]) -> Vec<u8>;
 
     /// Provide low-level transformation of content
     /// from one encoding format to another
     /// by manipulating the bytes that represent that content,
-    /// and then applying the mapping provided by [Codec::map_codepoint_to_utf8].
-    fn raw_to_utf8(&self, v: &[u8]) -> Vec<u8>;
+    /// and then applying the mapping provided by [CodePointMap::map_codepoint_to_plain].
+    fn raw_to_plain(&self, v: &[u8]) -> Vec<u8>;
 
     /// Helper that just stores and returns the number of bytes this Codec instance
     /// should expect to operate on for a given encoding/decoding implementation.
     ///
-    /// Only called internally by [Codec::encode]
-    /// to provide chunks of this size for [Codec::raw_encode] to operate over.
+    /// Only called internally by [CodecAPI::encode]
+    /// to provide chunks of this size for [CodecAPI::raw_encode] to operate over.
     ///
     /// By default, returns `4` for the 4 byte chunks we expect to contain UTF8 characters.
     /// Change this when working with encodings that expect a different chunk size.
@@ -44,14 +51,14 @@ pub trait Codec {
         4
     }
 
-    /// Encode a byte slice using [Codec::raw_encode].
+    /// Encode a byte slice using [CodecAPI::raw_encode].
     fn encode(&self, data: &[u8]) -> Vec<u8> {
         data.chunks(self.get_chunksize())
             .flat_map(|c| self.raw_encode(c))
             .collect::<Vec<u8>>()
     }
 
-    /// Convenience function that wraps [Codec::encode]
+    /// Convenience function that wraps [CodecAPI::encode]
     /// to encode a byte slice as a String in the target encoding format.
     fn encode_to_string(&self, data: &[u8]) -> String {
         self.encode(data)
@@ -60,17 +67,17 @@ pub trait Codec {
             .collect::<String>()
     }
 
-    /// Decode a byte slice using [Codec::raw_to_utf8].
-    fn to_utf8(&self, data: &[u8]) -> Vec<u8> {
+    /// Decode a byte slice using [CodecAPI::raw_to_plain].
+    fn to_plain(&self, data: &[u8]) -> Vec<u8> {
         data.chunks(4)
-            .flat_map(|c| self.raw_to_utf8(c))
+            .flat_map(|c| self.raw_to_plain(c))
             .collect::<Vec<u8>>()
     }
 
-    /// Convenience function that wraps [Codec::to_utf8]
+    /// Convenience function that wraps [CodecAPI::to_plain]
     /// to decode a byte slice as a String in the target encoding format.
-    fn to_utf8_string(&self, data: &[u8]) -> String {
-        self.to_utf8(data)
+    fn to_plain_string(&self, data: &[u8]) -> String {
+        self.to_plain(data)
             .iter()
             .map(|v| (*v as char).to_string())
             .collect::<String>()

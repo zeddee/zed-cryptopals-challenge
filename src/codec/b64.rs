@@ -1,4 +1,4 @@
-use super::adapter::Codec;
+use super::adapter::{CodePointMap, Codec, CodecAPI};
 
 const UPPERCASEOFFSET: i8 = b'A' as i8; // b'A' is 65 in utf-8, but 0 in Base64. So the offset is b'A'-0.
 const LOWERCASEOFFSET: i8 = b'a' as i8 - 26; // b'a' is 97 in utf-8, but represents 26 in Base64. So the offset is b'a'-26=71.
@@ -7,9 +7,8 @@ const PADDING: i8 = '=' as i8;
 
 #[derive(Copy, Clone)]
 pub struct Base64Adapter;
-
-impl Codec for Base64Adapter {
-    fn map_codepoint_to_utf8(&self, v: u8) -> Option<u8> {
+impl CodePointMap for Base64Adapter {
+    fn map_codepoint_to_plain(&self, v: u8) -> Option<u8> {
         let v = v as i8;
         let ascii_value = match v {
             0..=25 => v + UPPERCASEOFFSET,
@@ -34,7 +33,7 @@ impl Codec for Base64Adapter {
         Some(ascii_value)
     }
 
-    fn map_utf8_to_codepoint(&self, c: u8) -> Option<u8> {
+    fn map_plain_to_codepoint(&self, c: u8) -> Option<u8> {
         //https://base64.guru/learn/base64-characters
         let c = c as i8;
         let base64_index = match c {
@@ -49,13 +48,9 @@ impl Codec for Base64Adapter {
 
         Some(base64_index)
     }
+}
 
-    /// Set expected length of byte chunks to 3.
-    /// See [crate::codec::adapter::Codec::get_chunksize].
-    fn get_chunksize(&self) -> usize {
-        3
-    }
-
+impl CodecAPI for Base64Adapter {
     /// Bitwise operations to expand data in 3-byte chunks operating
     /// in an 8-bit space to 4-byte chunks operating in a 6-bit space.
     fn raw_encode(&self, chunk: &[u8]) -> Vec<u8> {
@@ -75,7 +70,7 @@ impl Codec for Base64Adapter {
             _ => unreachable!(),
         } // after performing bitwise operations, map each resulting byte from u8 to base64 characters
         .iter()
-        .filter_map(|c| self.map_codepoint_to_utf8(*c))
+        .filter_map(|c| self.map_codepoint_to_plain(*c))
         .collect::<Vec<u8>>();
 
         while res.len() < 4 {
@@ -86,7 +81,7 @@ impl Codec for Base64Adapter {
         res
     }
 
-    fn raw_to_utf8(&self, chunk: &[u8]) -> Vec<u8> {
+    fn raw_to_plain(&self, chunk: &[u8]) -> Vec<u8> {
         match chunk.len() {
             2 => vec![
                 (&chunk[0] & 0b00111111) << 2 | (&chunk[1] & 0b11110000) >> 4,
@@ -108,30 +103,37 @@ impl Codec for Base64Adapter {
         .filter(|c| *c > 0) // strip empty chunks post-decocde (EOL chars)
         .collect()
     }
+    /// Set expected length of byte chunks to 3.
+    /// See [crate::codec::adapter::Codec::get_chunksize].
+    fn get_chunksize(&self) -> usize {
+        3
+    }
 
-    /// Explicitly rewrite the [crate::codec::adapter::Codec::to_utf8] method,
+    /// Explicitly rewrite the [crate::codec::adapter::Codec::to_plain] method,
     /// because Base64 requires a different sequence of operations over
     /// the processed byte chunks.
-    fn to_utf8(&self, data: &[u8]) -> Vec<u8> {
+    fn to_plain(&self, data: &[u8]) -> Vec<u8> {
         data.chunks(4)
             .map(|c| {
                 // retain chunk size by stripping padding and remapping
                 // within a map
                 c.iter()
                     .filter(|c| **c != PADDING as u8)
-                    .filter_map(|c| self.map_utf8_to_codepoint(*c))
+                    .filter_map(|c| self.map_plain_to_codepoint(*c))
                     .collect::<Vec<u8>>()
             })
-            .map(|c| self.raw_to_utf8(&c))
+            .map(|c| self.raw_to_plain(&c))
             .flatten()
             .collect::<Vec<u8>>()
     }
 }
 
+impl Codec for Base64Adapter {}
+
 #[cfg(test)]
 mod tests {
     use super::Base64Adapter;
-    use crate::codec::adapter::Codec;
+    use crate::codec::adapter::CodecAPI;
 
     fn factory() -> Base64Adapter {
         Base64Adapter {}
@@ -194,7 +196,7 @@ mod tests {
 
         let input_data = input_str.as_bytes();
 
-        assert_eq!(factory().to_utf8_string(input_data), expected);
+        assert_eq!(factory().to_plain_string(input_data), expected);
     }
 
     #[test]
@@ -204,7 +206,7 @@ mod tests {
 
         let input_data = input_str.as_bytes();
 
-        assert_eq!(factory().to_utf8_string(input_data), expected);
+        assert_eq!(factory().to_plain_string(input_data), expected);
     }
 
     #[test]
@@ -214,7 +216,7 @@ mod tests {
 
         let input_data = input_str.as_bytes();
 
-        assert_eq!(factory().to_utf8_string(input_data), expected);
+        assert_eq!(factory().to_plain_string(input_data), expected);
     }
 
     #[test]
@@ -224,7 +226,7 @@ mod tests {
 
         let input = input_str.as_bytes();
 
-        assert_eq!(factory().to_utf8_string(input), expected);
+        assert_eq!(factory().to_plain_string(input), expected);
     }
 
     #[test]
@@ -234,6 +236,6 @@ mod tests {
 
         let input_data = input_str.as_bytes();
 
-        assert_eq!(factory().to_utf8_string(input_data), expected);
+        assert_eq!(factory().to_plain_string(input_data), expected);
     }
 }

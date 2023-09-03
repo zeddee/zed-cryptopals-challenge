@@ -75,7 +75,7 @@ where
     let codec = Arc::clone(codec);
     thread::spawn(move || {
         let cipher_hex = codec.encode(cipher.as_slice());
-        let decrypt_res = codec.to_utf8(
+        let decrypt_res = codec.to_plain(
             xor_decrypt(codec.as_ref(), crypt_text.as_slice(), cipher_hex.as_slice()).as_slice(),
         );
         let current_ascii_score = DecryptResult {
@@ -91,7 +91,7 @@ where
 /// Decrypt byte-slice of content with a given key, using repeated key xor.
 /// Returns an encoded vector of bytes.
 pub fn xor_decrypt<T: Codec>(codec: &T, content: &[u8], key: &[u8]) -> Vec<u8> {
-    let key = codec.to_utf8(key);
+    let key = codec.to_plain(key);
     let keyslice = key.as_slice();
 
     // Decrypt step 1: Split at newlines in content, make iterable to operate on
@@ -102,7 +102,7 @@ pub fn xor_decrypt<T: Codec>(codec: &T, content: &[u8], key: &[u8]) -> Vec<u8> {
     let mut outer_res: Vec<Vec<u8>> = Vec::new();
     for line in content_string_lines {
         // Use `codec` to decode this line
-        let decoded_line = codec.to_utf8(line.as_bytes());
+        let decoded_line = codec.to_plain(line.as_bytes());
 
         let res = decoded_line
             .chunks(keyslice.len())
@@ -130,8 +130,8 @@ pub fn xor_decrypt<T: Codec>(codec: &T, content: &[u8], key: &[u8]) -> Vec<u8> {
                 joined.push(*res);
             }
             if it.peek().is_some() {
-                joined.push(b'0');
-                joined.push(b'A');
+                joined.push(b'\\');
+                joined.push(b'n');
             }
         }
     }
@@ -141,28 +141,54 @@ pub fn xor_decrypt<T: Codec>(codec: &T, content: &[u8], key: &[u8]) -> Vec<u8> {
 /// XOR encrypts ASCII byte-slice `content`
 /// with an encoded byte slice `key`.
 pub fn xor_encrypt<T: Codec>(codec: &T, content: &[u8], key: &[u8]) -> Vec<u8> {
+    // Convert content to string and then split it into lines
+    let content = content.iter().map(|&c| c as char).collect::<String>();
+    let content_lines = content.lines();
+
     // encode, because we need to iterate over the correct chunk size
     // assume `key` is already encoded
-    let encoded = codec.encode(content);
+    let encoded_content_lines = content_lines.map(|line| codec.encode(line.as_bytes()));
 
+    let mut encrypted_lines: Vec<Vec<u8>> = Vec::new();
     // Must process in chunk sizes that match the byte-slice size of the key.
-    encoded
-        .chunks(key.len())
-        .flat_map(|chunk| {
-            let decoded_chunk = codec.to_utf8(chunk);
-            let inner_key = codec.to_utf8(key);
-            decoded_chunk
-                .iter()
-                .zip(inner_key)
-                .map(|(l, h)| l ^ h)
-                .collect::<Vec<u8>>()
-        })
-        .collect::<Vec<u8>>()
+    for encoded in encoded_content_lines {
+        let this_line = encoded
+            .chunks(key.len())
+            .flat_map(|chunk| {
+                let decoded_chunk = codec.to_plain(chunk);
+                let inner_key = codec.to_plain(key);
+                decoded_chunk
+                    .iter()
+                    .zip(inner_key)
+                    .map(|(l, h)| l ^ h)
+                    .collect::<Vec<u8>>()
+            })
+            .collect::<Vec<u8>>();
+
+        encrypted_lines.push(this_line);
+    }
+
+    let mut joined: Vec<u8> = Vec::new();
+    let mut it = encrypted_lines.iter().peekable();
+    while it.peek().is_some() {
+        while let Some(inner_res) = it.next() {
+            for res in inner_res {
+                joined.push(*res);
+            }
+        }
+        if it.peek().is_some() {
+            joined.push(b'0');
+            joined.push(b'a');
+        }
+    }
+
+    joined
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::codec::adapter::CodecAPI;
     use crate::codec::hex::Hexadecimal;
 
     fn factory() -> Hexadecimal {
@@ -212,7 +238,7 @@ mod tests {
             let res = xor_decrypt(&factory(), case.0, case.1);
 
             assert_eq!(
-                Hexadecimal {}.to_utf8_string(res.as_slice()),
+                Hexadecimal {}.to_plain_string(res.as_slice()),
                 "Cooking MC's like a pound of bacon"
             );
         }
@@ -252,7 +278,7 @@ I go crazy when I hear a cymbal";
         let codec = factory();
         let res = xor_decrypt(&codec, input, key);
 
-        assert_eq!(codec.to_utf8_string(res.as_slice()), expected,)
+        assert_eq!(codec.to_plain_string(res.as_slice()), expected,)
     }
 
     /// Simulate a line break in a text file, as opposed to encoded `\r\n` chars
@@ -291,7 +317,7 @@ a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f";
     fn test_decrypt_repeated_xor() {
         let codec = factory();
         let key = codec.encode("ICE".as_bytes());
-        let res = codec.to_utf8_string(
+        let res = codec.to_plain_string(
             xor_decrypt(&codec, REPEATEDXOR_ENCRYPTED.as_bytes(), key.as_slice()).as_slice(),
         );
         assert_eq!(res, REPEATEDXOR_UNENCRYPTED,);
