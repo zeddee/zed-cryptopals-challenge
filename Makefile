@@ -14,4 +14,5 @@ docs: docs-clean
 	rm -rf dist-docs
 doc: docs
 fmt:
-	rustfmt src/**/*.rs
+	rustfmt **/*.rs
+
