@@ -1,5 +1,4 @@
-use crate::codec::adapter::Codec;
-use crate::crack::DecryptResult;
+use crate::{codec::adapter::Codec, crack::DecryptResult};
 use std::sync::Arc;
 use std::thread;
 

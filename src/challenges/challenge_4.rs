@@ -1,7 +1,6 @@
 //! Set 1/Challenge 4 <https://cryptopals.com/sets/1/challenges/4>
 
-use crate::codec::hex::Hexadecimal;
-use crate::crack::xor;
+use crate::{codec::hex::Hexadecimal, crack::xor};
 
 /// One-off function to:
 /// 1. Read a file containing one hex per line.
